@@ -55,8 +55,8 @@ with upcoming_fixtures:
     st.divider()
 
     df = pd.DataFrame(
-        np.random.randn(20, 5),
-        columns=('col %d' % i for i in range(5)))
+        np.random.randn(20, 3),
+        columns=('col %d' % i for i in range(3)))
 
     st.table(df)
 
@@ -65,8 +65,8 @@ with previous_results:
     st.divider()
 
     df = pd.DataFrame(
-        np.random.randn(10, 5),
-        columns=('col %d' % i for i in range(5)))
+        np.random.randn(10, 3),
+        columns=('col %d' % i for i in range(3)))
 
     st.table(df)
 
@@ -75,7 +75,7 @@ with current_standings:
     st.divider()
 
     df = pd.DataFrame(
-        np.random.randn(10, 5),
+        np.round(np.random.randn(10, 5), 0),
         columns=('col %d' % i for i in range(5)))
 
     st.table(df)
