@@ -5,17 +5,17 @@ st.set_page_config(page_title='YNDA', layout='wide',
                    initial_sidebar_state='collapsed')
 
 with st.sidebar:
-    x = 1
-    # names = get_names()
-    # nominee = st.selectbox(
-    #     'Pick a person to drink:',
-    #     names)
-    # if st.button("Update Dashboard"):
-    #     # displays the nominee
-    #     st.text(nominee)
+    # x = 1
+    names = get_names()
+    nominee = st.selectbox(
+        'Pick a person to drink:',
+        names)
+    if st.button("Update Dashboard"):
+        # displays the nominee
+        st.text(nominee)
 
 
-regular_league, spacer1, upcoming_fixtures, spacer2, previous_results, spacer3, current_standings = st.columns([
+regular_league, spacer1, previous_results, spacer2, current_standings, spacer3, upcoming_fixtures = st.columns([
     2, 0.1, 1, 0.05, 1, 0.05, 1])
 
 with regular_league:
@@ -50,18 +50,9 @@ with regular_league:
         data = np.random.randn(10, 1)
         st.line_chart(data)
 
-with upcoming_fixtures:
-    st.markdown("Upcoming Fixtures")
-    st.divider()
-
-    df = pd.DataFrame(
-        np.random.randn(20, 3),
-        columns=('col %d' % i for i in range(3)))
-
-    st.table(df)
 
 with previous_results:
-    st.markdown("Previous Results")
+    st.markdown("Results")
     st.divider()
 
     df = pd.DataFrame(
@@ -71,7 +62,7 @@ with previous_results:
     st.table(df)
 
 with current_standings:
-    st.markdown("Current Standings")
+    st.markdown("Standings")
     st.divider()
 
     df = pd.DataFrame(
@@ -79,3 +70,9 @@ with current_standings:
         columns=('col %d' % i for i in range(5)))
 
     st.table(df)
+
+with upcoming_fixtures:
+    st.markdown("Upcoming Fixtures")
+    st.divider()
+
+    st.table(get_fixtures())
