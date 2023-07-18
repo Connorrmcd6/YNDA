@@ -1,78 +1,80 @@
 import streamlit as st
 from functions import *
 
-st.set_page_config(page_title='YNDA', layout='wide',
-                   initial_sidebar_state='collapsed')
+st.set_page_config(page_title='YNDA',
+                   layout='centered',
+                   initial_sidebar_state='collapsed',
+                   page_icon='🍺',
+                   )
+
 
 with st.sidebar:
-    # x = 1
-    names = get_names()
-    nominee = st.selectbox(
-        'Pick a person to drink:',
-        names)
-    if st.button("Update Dashboard"):
-        # displays the nominee
-        st.text(nominee)
+    nominee = st.selectbox('Nominate someone to drink:',
+                           ['Alex', 'Div', 'Marco'])
+
+    completed_drink = st.selectbox('Record a completed drink:', [
+                                   'Alex', 'Div', 'Marco'])
+# names = get_names()
+# nominee = st.selectbox(
+#     'Pick a person to drink:',
+#     names)
+# if st.button("Update Dashboard"):
+#     # displays the nominee
+#     st.text(nominee)
 
 
-regular_league, spacer1, previous_results, spacer2, current_standings, spacer3, upcoming_fixtures = st.columns([
-    2, 0.1, 1, 0.05, 1, 0.05, 1])
+awards_tab, stats_tab, drinks_tab, rules_tab = st.tabs(
+    ["🏆 Awards", "📈 Stats", "🍺 Drinks", "ℹ️ Rules"])
 
-with regular_league:
-    st.markdown("Regular League")
+
+with awards_tab:
+    col1, col2, = st.columns(2)
+
+    # column 1
+    col1.metric("Golden Boot", "Divyam Dixit",
+                help='Most first place finishes over the season')
+
+    col1.metric("Relegation Warrior", "Hethe Brinkman",
+                help='Most last place finishes over the season')
+
+    col1.metric("The Origi Award", "Devon Hodgson",
+                help='Most bench points accumulated over the season')
+
+    # column 2
+    col2.metric("The Chelsea Award", "Connor McDonald",
+                help='Most -4s (hits) accumulated over the season')
+
+    col2.metric("Serial Streaker", "Cole Floyd",
+                help='Longest drinks streak of the season')
+
+    col2.metric("The Bot Award", "Ryan Shackleton",
+                help='Lowest game week score of the season')
+
+
+with stats_tab:
+    st.write("Total Drinks")
+    st.bar_chart(np.random.randn(50, 3))
     st.divider()
 
-    metric_container = st.container()
-    chart_1_container = st.container()
-    chart_2_container = st.container()
-
-    with metric_container:
-        col1, col2, col3 = st.columns(3)
-
-        # row 1
-        col1.metric("Temperature", "70 °F", "1.2 °F")
-        col2.metric("Wind", "9 mph", "-8%")
-        col3.metric("Humidity", "86%", "4%")
-
-        # row 2
-        col1.metric("Temperature", "23 °C", "-4.8 °F")
-        col2.metric("Wind", "16 kph", "+4%")
-        col3.metric("Humidity", "65%", "-12%")
-        st.divider()
-
-    with chart_1_container:
-        st.write("Total Drinks")
-        st.bar_chart(np.random.randn(50, 3))
-        st.divider()
-
-    with chart_2_container:
-        st.write("Rank Chart Last 10 Game Weeks")
-        data = np.random.randn(10, 1)
-        st.line_chart(data)
+    st.write("Rank Chart Last 10 Game Weeks")
+    data = np.random.randn(10, 1)
+    st.line_chart(data)
 
 
-with previous_results:
-    st.markdown("Results")
-    st.divider()
-
+with drinks_tab:
+    st.write("Drink Streaks")
     df = pd.DataFrame(
         np.random.randn(10, 3),
         columns=('col %d' % i for i in range(3)))
 
     st.table(df)
 
-with current_standings:
-    st.markdown("Standings")
-    st.divider()
+    st.write("Current Chain")
 
-    df = pd.DataFrame(
-        np.round(np.random.randn(10, 5), 0),
-        columns=('col %d' % i for i in range(5)))
-
-    st.table(df)
-
-with upcoming_fixtures:
-    st.markdown("Upcoming Fixtures")
-    st.divider()
-
-    st.table(get_fixtures())
+with rules_tab:
+    st.markdown('''
+                ## Rules of the game
+                - Rule 1
+                - Rule 2
+                - Rule 3
+                                    ''')
