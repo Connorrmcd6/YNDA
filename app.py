@@ -7,6 +7,7 @@ st.set_page_config(page_title='YNDA',
                    page_icon='🍺',
                    )
 
+# st.header("You'll Never Drink Alone")
 
 with st.sidebar:
     nominee = st.selectbox('Nominate someone to drink:',
