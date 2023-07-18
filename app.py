@@ -1,6 +1,4 @@
-import streamlit as st
-import numpy as np
-import pandas as pd
+from functions import *
 
 st.set_page_config(page_title='YNDA',
                    layout='centered',
@@ -8,7 +6,24 @@ st.set_page_config(page_title='YNDA',
                    page_icon='🍺',
                    )
 
-# st.header("You'll Never Drink Alone")
+if 'data' not in st.session_state:
+    # create connection
+    gs_connection = connect_to_gs(st.secrets["gcp_service_account"])
+
+    # fetch gameweek data
+    gameweek_df = google_sheets_data(
+        gs_connection, gameweek_results_table, google_sheet_key, ['event', 'points', 'total_points', 'event_transfers_cost', 'points_on_bench'])
+    st.session_state.data = gameweek_df
+    
+else: 
+    gameweek_df = st.session_state.data
+    # generate gameweek metrics
+
+
+most_1st_place_player, most_1st_place_count, most_last_place_player, most_last_place_count, player_with_highest_cost, player_with_highest_cost_count, player_with_highest_points_on_bench, player_with_highest_points_on_bench_count, lowest_score_player_name, lowest_score_event, lowest_score_points = create_metrics(
+        gameweek_df)
+
+
 
 with st.sidebar:
     nominee = st.selectbox('Nominate someone to drink:',
@@ -33,24 +48,23 @@ with awards_tab:
     col1, col2, = st.columns(2)
 
     # column 1
-    col1.metric("Golden Boot", "Divyam Dixit",
-                help='Most first place finishes over the season')
+    col1.metric("Golden Boot", f"{most_1st_place_player}",
+                help=f'{most_1st_place_player} has finished first more than anyone else this season with a total of {most_1st_place_count} wins')
 
-    col1.metric("Relegation Warrior", "Hethe Brinkman",
-                help='Most last place finishes over the season')
+    col1.metric("Relegation Warrior", f'{most_last_place_player}',
+                help=f'{most_last_place_player} has finished last more than anyone else this season with a total of {most_last_place_count} last place finishes')
 
-    col1.metric("The Origi Award", "Devon Hodgson",
-                help='Most bench points accumulated over the season')
-
+    col1.metric("The Origi Award", f'{player_with_highest_points_on_bench}',
+                help=f'{player_with_highest_points_on_bench} has accumulated the most points on bench this season with a total of {player_with_highest_points_on_bench_count} points')
     # column 2
-    col2.metric("The Chelsea Award", "Connor McDonald",
-                help='Most -4s (hits) accumulated over the season')
+    col2.metric("The Chelsea Award", f"{player_with_highest_cost}",
+                help=f'{player_with_highest_cost} has taken the most hits this season, sacrificing a total of {player_with_highest_cost_count} points')
 
     col2.metric("Serial Streaker", "Cole Floyd",
                 help='Longest drinks streak of the season')
 
-    col2.metric("The Bot Award", "Ryan Shackleton",
-                help='Lowest game week score of the season')
+    col2.metric("The Bot Award", f"{lowest_score_player_name}",
+                help=f"{lowest_score_player_name} had the worst gameweek of the season with just {lowest_score_points} points in gameweek {lowest_score_event}")
 
 
 with stats_tab:
