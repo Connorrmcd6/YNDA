@@ -1,0 +1,6 @@
+#configs
+/.streamlit/secrets.toml
+/ynda-fpl-app-44ae15d6fee2.json
+
+#cache
+__pycache__

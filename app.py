@@ -1,5 +1,6 @@
 import streamlit as st
-from functions import *
+import numpy as np
+import pandas as pd
 
 st.set_page_config(page_title='YNDA',
                    layout='centered',

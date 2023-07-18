@@ -1,0 +1,1 @@
+to create requirements.txt file run: `pipreqs ./` in the terminal
