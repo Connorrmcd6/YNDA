@@ -14,30 +14,40 @@ if 'data' not in st.session_state:
     gameweek_df = google_sheets_data(
         gs_connection, gameweek_results_table, google_sheet_key, ['event', 'points', 'total_points', 'event_transfers_cost', 'points_on_bench'])
     st.session_state.data = gameweek_df
-    
-else: 
+
+else:
     gameweek_df = st.session_state.data
     # generate gameweek metrics
 
 
 most_1st_place_player, most_1st_place_count, most_last_place_player, most_last_place_count, player_with_highest_cost, player_with_highest_cost_count, player_with_highest_points_on_bench, player_with_highest_points_on_bench_count, lowest_score_player_name, lowest_score_event, lowest_score_points = create_metrics(
-        gameweek_df)
-
+    gameweek_df)
 
 
 with st.sidebar:
-    nominee = st.selectbox('Nominate someone to drink:',
-                           ['Alex', 'Div', 'Marco'])
+    # capture week of nomination from backend
+    st.header("🎖️ Nominations")
 
-    completed_drink = st.selectbox('Record a completed drink:', [
-                                   'Alex', 'Div', 'Marco'])
-# names = get_names()
-# nominee = st.selectbox(
-#     'Pick a person to drink:',
-#     names)
-# if st.button("Update Dashboard"):
-#     # displays the nominee
-#     st.text(nominee)
+    nominator = st.selectbox("Your Name", [
+                             'Alex', 'Div', 'Marco'])
+
+    nominee = st.selectbox("Who are you nominating?", [
+                           'Alex', 'Div', 'Marco'])
+
+    nomination_reason = st.selectbox("Why are you nominating?", [
+                                     'I came first in the game week', 'I have a drinks streak'])
+
+    if st.button('Submit Nomination'):
+        x = 1
+
+    st.divider()
+
+    st.header("🍺 Drink Submissions")
+    drinker = st.selectbox("Your Name:", [
+        'Alex', 'Div', 'Marco'])
+    if st.button('Submit Drink'):
+
+        x = 1
 
 
 awards_tab, stats_tab, drinks_tab, rules_tab = st.tabs(
@@ -79,13 +89,18 @@ with stats_tab:
 
 with drinks_tab:
     st.write("Drink Streaks")
-    df = pd.DataFrame(
-        np.random.randn(10, 3),
-        columns=('col %d' % i for i in range(3)))
+    df1 = pd.DataFrame(
+        np.random.randn(10, 2),
+        columns=('col %d' % i for i in range(2)))
+    st.table(df1)
 
-    st.table(df)
+    st.write("Latest Nominations")
+    df2 = pd.DataFrame(
+        # colums = gw, nominee, nominator, completed on time
+        np.random.randn(5, 4),
+        columns=('col %d' % i for i in range(4)))
+    st.table(df2)
 
-    st.write("Current Chain")
 
 with rules_tab:
     st.markdown('''
