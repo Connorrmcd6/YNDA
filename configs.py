@@ -7,8 +7,8 @@ fixture_endpoint = 'https://fantasy.premierleague.com/api/fixtures/'
 
 # sheet names
 gameweek_results_table = 'gameweek_results'
-player_table = 'players'
-nominations_table = 'nominations'
+managers_table = 'managers'
+drinks_table = 'drinks'
 
 # sheet_key
 google_sheet_key = '15guH9poFUzNztNV9q4nI1yvY9NbR9CkJebSk2R7aWoU'

@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-import os
+from datetime import datetime, timedelta
+from random import sample
 import gspread
 from google.oauth2 import service_account
 from pydrive.auth import GoogleAuth
@@ -20,7 +21,7 @@ def connect_to_gs(service_account_key):
 # function to fetch data from google sheets
 
 
-def google_sheets_data(gc, sheet_name, sheet_key, columns_list):
+def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
         gs = gc.open_by_key(sheet_key)
@@ -48,9 +49,36 @@ def google_sheets_data(gc, sheet_name, sheet_key, columns_list):
         print("An error occurred:", e)
         return None
 
+# function to write data to google sheets
 
+
+def write_google_sheets_data(gc, df, sheet_name, sheet_key):
+    try:
+        # Open specific sheet
+        gs = gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        df_values = df.values.tolist()
+        gs.values_append(sheet_name, {'valueInputOption': 'RAW'}, {
+            'values': df_values})
+
+        return None
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"Error: Worksheet not found, please create a new tab named:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
 
 # function to return season metrics
+
+
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -105,3 +133,12 @@ def create_metrics(df):
     lowest_score_points = min_score_row['points']
 
     return most_1st_place_player, most_1st_place_count, most_last_place_player, most_last_place_count, player_with_highest_cost, player_with_highest_cost_count, player_with_highest_points_on_bench, player_with_highest_points_on_bench_count, lowest_score_player_name, lowest_score_event, lowest_score_points
+
+# function to validate select box choices
+
+
+def select_box_validator(input):
+    if input == "":
+        return False
+    else:
+        return True
