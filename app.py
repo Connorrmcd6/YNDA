@@ -16,7 +16,7 @@ gs_connection = connect_to_gs(st.secrets['gcp_service_account'])
 # use this section to update all google sheets data to latest data
 
 if "current_week" not in st.session_state:
-    current_week = 1  # change to function
+    current_week = 4  # change to function
     st.session_state.current_week = current_week
 else:
     current_week = st.session_state.current_week
@@ -67,6 +67,18 @@ if 'data' not in st.session_state:
 else:
     gameweek_df = st.session_state.data
 
+if 'drinks_df' not in st.session_state:
+    # fetch gameweek data
+    drinks_df = fetch_google_sheets_data(
+        gs_connection, drinks_table, google_sheet_key, ["event"])
+    drinks_df = drinks_df[drinks_df.event > current_week - 3]
+    latest_drinks = drinks_df.iloc[:, [0, 2, 3, 5, 6]]
+    latest_drinks.rename(columns={'event': 'Game Week', 'drink_name': "Name", "drink_type": "Drink Type",
+                         "nomination_deadline_date": "Deadline", "nomination_completed_date": "Completed Date"}, inplace=True)
+    st.session_state.drinks_df = latest_drinks
+
+else:
+    drinks_df = st.session_state.drinks_df
 
 # generate gameweek metrics
 most_1st_place_player, most_1st_place_count, most_last_place_player, most_last_place_count, player_with_highest_cost, player_with_highest_cost_count, player_with_highest_points_on_bench, player_with_highest_points_on_bench_count, lowest_score_player_name, lowest_score_event, lowest_score_points = create_metrics(
@@ -121,7 +133,7 @@ with st.sidebar:
                             "drink_type": ["nomination"],
                             "created_date": [created_date],
                             "deadline_date": [deadline_date],
-                            "completed_date": [None]}
+                            "completed_date": ['Not Completed']}
 
                     df = pd.DataFrame(data)
                     write_google_sheets_data(
@@ -169,7 +181,7 @@ with st.sidebar:
                             "drink_type": ["nomination", "nomination", "nomination"],
                             "created_date": [created_date, created_date, created_date],
                             "deadline_date": [deadline_date, deadline_date, deadline_date],
-                            "completed_date": [None, None, None]}
+                            "completed_date": ['Not Completed', 'Not Completed', 'Not Completed']}
 
                     df = pd.DataFrame(data)
                     write_google_sheets_data(
@@ -197,11 +209,7 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 
 with drinks_tab:
     st.write("Latest Drinks")
-    df2 = pd.DataFrame(
-        # colums = gw, nominee, nominator, completed on time
-        np.random.randn(5, 4),
-        columns=('col %d' % i for i in range(4)))
-    st.table(df2)
+    st.table(st.session_state.drinks_df)
 
     st.write("Drink Streaks")
     df1 = pd.DataFrame(
