@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 from random import sample
+from gspread_dataframe import set_with_dataframe
 import gspread
 from google.oauth2 import service_account
 from pydrive.auth import GoogleAuth
@@ -142,3 +143,71 @@ def select_box_validator(input):
         return False
     else:
         return True
+
+
+def submit_drink(gc, df, sheet_key, nominee):
+    try:
+        filtered_df = df[(df["drinker_name"] == nominee) & (
+            df["nomination_completed_date"] == "Not Completed")]
+        last_record_index = filtered_df.index[-1]
+        df.at[last_record_index, "nomination_completed_date"] = (
+            datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M")
+    except IndexError as e:
+        r = "You dont have any outstanding drinks"
+        return r
+
+    try:
+        # Open specific sheet
+        gs = gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet("drinks")
+
+        set_with_dataframe(tab, df)
+
+        return None
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"Error: Worksheet not found, please create a new tab named:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+
+#uno reverse function, finds last incompleted record from drinks table and switches the nominator and nominee name
+def uno_reverse(gc, df, sheet_key, nominee):
+    try:
+        filtered_df = df[(df["drinker_name"] == nominee) & (df["nomination_completed_date"] == "Not Completed")]
+        last_record_index = filtered_df.index[-1]
+
+        df.at[last_record_index, "drinker_name"] = filtered_df.nominator_name[last_record_index]
+        df.at[last_record_index, "drink_type"] = "uno reverse"
+
+    except IndexError as e:
+        r = "You dont have any outstanding drinks"
+        return r
+
+    try:
+        # Open specific sheet
+        gs = gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet("drinks")
+
+        set_with_dataframe(tab, df)
+
+        return None
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"Error: Worksheet not found, please create a new tab named:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
