@@ -287,10 +287,10 @@ with stats_tab:
     df = categories(st.session_state.drinks)
 
     bar_chart = alt.Chart(df).mark_bar().encode(
-        alt.X("Name:O", axis=alt.Axis(title="Name"), sort="descending"),
-        alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
+        alt.X("Name:O", axis=alt.Axis(title="Name")),
+        alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks"), sort="descending"),
         alt.Color("Category:N", legend=alt.Legend(
-            orient='none',
+            orient='top',
             direction='horizontal',
             titleAnchor='middle'))
     )
