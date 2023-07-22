@@ -294,7 +294,7 @@ with stats_tab:
             orient='top',
             direction='horizontal',
             title=None),
-            sort=['Outstanding', 'Late', 'Complete'])
+            sort=['Late', 'Complete', 'Outstanding'])
     )
     st.altair_chart(bar_chart, use_container_width=True)
     # st.divider()
