@@ -16,7 +16,7 @@ gs_connection = connect_to_gs(st.secrets['gcp_service_account'])
 # use this section to update all google sheets data to latest data
 
 if "current_week" not in st.session_state:
-    current_week = 4  # change to function
+    current_week = 7  # change to function
     st.session_state.current_week = current_week
 else:
     current_week = st.session_state.current_week
@@ -53,7 +53,7 @@ else:
     last_place = st.session_state.last_place
 
 if "first_place" not in st.session_state:
-    first_place = "Liam Smorfitt"  # change to function
+    first_place = "Ryan Shacks"  # change to function
     st.session_state.first_place = first_place
 else:
     first_place = st.session_state.first_place
