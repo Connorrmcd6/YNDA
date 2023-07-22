@@ -8,6 +8,8 @@ import gspread
 from google.oauth2 import service_account
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import matplotlib.pyplot as plt
+import altair as alt
 from configs import *
 
 
@@ -178,13 +180,37 @@ def submit_drink(gc, df, sheet_key, nominee):
         return None
 
 
-#uno reverse function, finds last incompleted record from drinks table and switches the nominator and nominee name
+def categories(df):
+    df['Drinks'] = 1
+    df = df.iloc[:, [2, 5, 6, 7]]
+    df.rename(columns={'drinker_name': 'Name'}, inplace=True)
+    # Define the conditions for the new column
+    condition1 = (df['nomination_completed_date']
+                  < df['nomination_deadline_date'])
+    condition2 = (df['nomination_completed_date']
+                  > df['nomination_deadline_date'])
+    condition3 = (df['nomination_completed_date'] == 'Not Completed')
+
+    # Apply the conditions and create the new column
+    # Set a default value if no conditions are met
+    df['Category'] = 'Default Value'
+    df.loc[condition1, 'Category'] = 'Completed'
+    df.loc[condition2, 'Category'] = 'Late'
+    df.loc[condition3, 'Category'] = 'Outstanding'
+
+    return df
+
+# uno reverse function, finds last incompleted record from drinks table and switches the nominator and nominee name
+
+
 def uno_reverse(gc, df, sheet_key, nominee):
     try:
-        filtered_df = df[(df["drinker_name"] == nominee) & (df["nomination_completed_date"] == "Not Completed")]
+        filtered_df = df[(df["drinker_name"] == nominee) & (
+            df["nomination_completed_date"] == "Not Completed")]
         last_record_index = filtered_df.index[-1]
 
-        df.at[last_record_index, "drinker_name"] = filtered_df.nominator_name[last_record_index]
+        df.at[last_record_index,
+              "drinker_name"] = filtered_df.nominator_name[last_record_index]
         df.at[last_record_index, "nominator_name"] = nominee
         df.at[last_record_index, "drink_type"] = "uno reverse"
 

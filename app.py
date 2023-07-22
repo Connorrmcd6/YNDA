@@ -283,8 +283,16 @@ with drinks_tab:
 
 with stats_tab:
     st.write("Total Drinks")
-    st.bar_chart(np.random.randn(50, 3))
-    st.divider()
+
+    df = categories(st.session_state.drinks)
+
+    bar_chart = alt.Chart(df).mark_bar().encode(
+        x="Name:O",
+        y="sum(Drinks):Q",
+        color="Category:N"
+    )
+    st.altair_chart(bar_chart, use_container_width=True)
+    # st.divider()
 
     st.write("Rank Chart Last 10 Game Weeks")
     data = np.random.randn(10, 1)
