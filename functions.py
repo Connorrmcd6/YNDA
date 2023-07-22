@@ -185,6 +185,7 @@ def uno_reverse(gc, df, sheet_key, nominee):
         last_record_index = filtered_df.index[-1]
 
         df.at[last_record_index, "drinker_name"] = filtered_df.nominator_name[last_record_index]
+        df.at[last_record_index, "nominator_name"] = nominee
         df.at[last_record_index, "drink_type"] = "uno reverse"
 
     except IndexError as e:

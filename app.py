@@ -32,6 +32,20 @@ else:
     managers = st.session_state.managers
 
 
+if 'uno' not in st.session_state:
+    uno = fetch_google_sheets_data(gs_connection, managers_table, google_sheet_key, []).iloc[:, [
+        1, 3]].sort_values(['uno_reverse', 'player_name'], ascending=(False, True))
+    uno.rename(columns={'player_name': 'Name',
+               'uno_reverse': "Has Uno Reverse"}, inplace=True)
+    # uno_display = uno.iloc[:, [ 1, 3]].sort_values(['uno_reverse', 'player_name'], ascending=(False, True))
+    # uno_display.rename(columns={'player_name': 'Name', 'uno_reverse': "Has used Uno Reverse"}, inplace=True)
+    # st.session_state.uno_display = uno_display
+    st.session_state.uno = uno
+else:
+    uno = st.session_state.uno
+    # uno_display = st.session_state.uno_display
+
+
 if "last_place" not in st.session_state:
     last_place = "Alex Wietzorrek"  # change to function
     st.session_state.last_place = last_place
@@ -105,31 +119,31 @@ with st.sidebar:
     if st.button(label="Submit", key="nominate_submit"):
         if 'nominate' not in st.session_state:
             if not select_box_validator(nominator):
-                st.error('Please fill in your name', icon="🚨")
+                st.error('Please fill in your name')
 
             elif not select_box_validator(nominee):
-                st.error('Please select a person to nominate', icon="🚨")
+                st.error('Please select a person to nominate')
 
             elif nominator == nominee:
-                st.error("You can't nominate yourself", icon="🚨")
+                st.error("You can't nominate yourself")
 
             elif nominator != st.session_state.first_place:
-                st.error("You did not win the gameweek", icon="🚨")
+                st.error("You did not win the gameweek")
 
             elif nominee in st.session_state.red_cards:
-                st.error("This person got a red card, pick someone else", icon="🚨")
+                st.error("This person got a red card, pick someone else")
 
             elif nominee in st.session_state.own_goals:
                 st.error(
-                    "This person got an own goal, pick someone else", icon="🚨")
+                    "This person got an own goal, pick someone else")
 
             elif nominee in st.session_state.negative_points:
                 st.error(
-                    "This person got negative points, pick someone else", icon="🚨")
+                    "This person got negative points, pick someone else")
 
             elif nominee == st.session_state.last_place:
                 st.error(
-                    "This person came last, pick someone else", icon="🚨")
+                    "This person came last, pick someone else")
 
             else:
                 with st.spinner(text="Submitting..."):
@@ -160,16 +174,16 @@ with st.sidebar:
                     st.session_state.nominate = True
                     st.success('Nomination Submitted')
         else:
-            st.error('You have already nominated', icon="🚨")
+            st.error('You have already nominated')
 
     st.header("OR")
 
     if st.button('🔄 Randomly pick 3'):
         if "nominate" not in st.session_state:
             if not select_box_validator(nominator):
-                st.error('Please fill in your name', icon="🚨")
+                st.error('Please fill in your name')
             elif nominator != st.session_state.first_place:
-                st.error("You did not win the gameweek", icon="🚨")
+                st.error("You did not win the gameweek")
             else:
                 with st.spinner(text="Picking..."):
 
@@ -222,7 +236,7 @@ with st.sidebar:
                     st.text(f"3.{random_nominees[2]}")
                     st.success('Nomination Submitted')
         else:
-            st.error('You have already nominated', icon="🚨")
+            st.error('You have already nominated')
 
     st.divider()
 
@@ -244,13 +258,16 @@ with st.sidebar:
                         st.error(r)
         with right_button:
             if st.button(label="🫵 Uno", key="uno_reverse"):
-                with st.spinner(text="Reversing..."):
-                    r = uno_reverse(gs_connection, st.session_state.drinks,
-                                    google_sheet_key, drink_submitter)
-                    if r == None:
-                        st.success('Done')
-                    else:
-                        st.error(r)
+                if not select_box_validator(nominator):
+                    st.error('Please fill in your name')
+                else:
+                    with st.spinner(text="Reversing..."):
+                        r = uno_reverse(gs_connection, st.session_state.drinks,
+                                        google_sheet_key, drink_submitter)
+                        if r == None:
+                            st.success('Done')
+                        else:
+                            st.error(r)
 
 # '''------------------------------------------------------------APP------------------------------------------------------------'''
 drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
@@ -261,11 +278,8 @@ with drinks_tab:
     st.write("Latest Drinks")
     st.table(st.session_state.drinks_display)
 
-    st.write("Drink Streaks")
-    df1 = pd.DataFrame(
-        np.random.randn(10, 2),
-        columns=('col %d' % i for i in range(2)))
-    st.table(df1)
+    st.write("Uno Reverse Cards 🫵 🔄")
+    st.table(st.session_state.uno)
 
 with stats_tab:
     st.write("Total Drinks")
@@ -302,7 +316,9 @@ with awards_tab:
 with rules_tab:
     st.markdown('''
                 ## Rules of the game
-                - Rule 1
-                - Rule 2
-                - Rule 3
-                                    ''')
+                1. The winner of each week can nominate one person of their choice or randomly nominate three people (with the chance of picking themselves).
+                2. Anyone who finishes last, or has a player that got a red card, scored an own goal or finished with negative points in their :red[**final 11**] will automatically be assigned a drink.
+                3. Anyone who falls under point two will be immune from further nominations for that game week.
+                4. At the start of the season everyone is given :red[**one**] "Uno Reverse Card". You can use this card to give a drink back to the person that nominated you if you do it :red[**before**] the deadline. 
+                5. [still voting ]You can Uno Reverse someone else's Uno Reverse if you both still have one.                    
+                ''')
