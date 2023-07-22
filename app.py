@@ -258,7 +258,7 @@ with st.sidebar:
                         st.error(r)
         with right_button:
             if st.button(label="🫵 Uno", key="uno_reverse"):
-                if not select_box_validator(nominator):
+                if not select_box_validator(drink_submitter):
                     st.error('Please fill in your name')
                 else:
                     with st.spinner(text="Reversing..."):
