@@ -287,12 +287,12 @@ with stats_tab:
     df = categories(st.session_state.drinks)
 
     bar_chart = alt.Chart(df).mark_bar().encode(
-         alt.X("Name:O",axis=alt.Axis(title="Name"), sort="sum(Drinks):Q"),
-         alt.Y("sum(Drinks):Q",axis=alt.Axis(title="Total Drinks")),
-         alt.Color("Category:N", legend=alt.Legend(
-        orient='none',
-        direction='horizontal',
-        titleAnchor='middle'))
+        alt.X("Name:O", axis=alt.Axis(title="Name"), sort="descending"),
+        alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
+        alt.Color("Category:N", legend=alt.Legend(
+            orient='none',
+            direction='horizontal',
+            titleAnchor='middle'))
     )
     st.altair_chart(bar_chart, use_container_width=True)
     # st.divider()
