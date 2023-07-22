@@ -292,7 +292,8 @@ with stats_tab:
         alt.Color("Category:N", legend=alt.Legend(
             orient='top',
             direction='horizontal',
-            title=None))
+            title=None),
+            sort=['Outstanding', 'Late', 'Complete'])
     )
     st.altair_chart(bar_chart, use_container_width=True)
     # st.divider()
