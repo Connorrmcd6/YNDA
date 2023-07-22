@@ -290,9 +290,9 @@ with stats_tab:
         alt.X("Name:O", axis=alt.Axis(title="Name"), sort='-y'),
         alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
         alt.Color("Category:N", legend=alt.Legend(
-            orient='top-right',
+            orient='top',
             direction='horizontal',
-            titleAnchor='middle'))
+            title=None))
     )
     st.altair_chart(bar_chart, use_container_width=True)
     # st.divider()
