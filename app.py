@@ -290,7 +290,7 @@ with stats_tab:
         alt.X("Name:O", axis=alt.Axis(title="Name"), sort='-y'),
         alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
         alt.Color("Category:N", legend=alt.Legend(
-            orient='top',
+            orient='top-right',
             direction='horizontal',
             titleAnchor='middle'))
     )
