@@ -295,15 +295,17 @@ with stats_tab:
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
-
     st.header("League Ranks")
     rank_df = build_rank_df(st.session_state.data, current_week)
-    rank_chart = alt.Chart(rank_df).mark_line().encode(
+
+    rank_chart = alt.layer(alt.Chart(rank_df).mark_line().encode(
         alt.X('event:O', axis=alt.Axis(title="Game Week")),
         alt.Y('rank:O', axis=alt.Axis(title="League Rank")),
         alt.Color('player_name:N', legend=alt.Legend(
+            orient='bottom',
+            columns=4,
             title=None)),
-    )
+    )).interactive()
 
     st.altair_chart(rank_chart, use_container_width=True)
 
