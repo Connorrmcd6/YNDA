@@ -93,7 +93,7 @@ if 'drinks' not in st.session_state:
         gs_connection, drinks_table, google_sheet_key, ["event"])
     drinks_display = drinks[drinks.event > current_week - 3]
     drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
-    drinks_display.rename(columns={'event': 'Game Week', 'drink_name': "Name", "drink_type": "Drink Type",
+    drinks_display.rename(columns={'event': 'Game Week', 'drinker_name': "Name", "drink_type": "Drink Type",
                           "nomination_deadline_date": "Deadline", "nomination_completed_date": "Completed Date"}, inplace=True)
     st.session_state.drinks_display = drinks_display
     st.session_state.drinks = drinks
