@@ -205,13 +205,12 @@ def categories(df):
 
 def uno_reverse(gc, df, sheet_key, nominee):
     try:
-        filtered_df = df[(df["drinker_name"] == nominee) & (
-            df["nomination_completed_date"] == "Not Completed")]
+        filtered_df = df[(df["drinker_name"] == nominee) & (df["nomination_completed_date"] == "Not Completed")]
         last_record_index = filtered_df.index[-1]
 
-        df.at[last_record_index,
-              "drinker_name"] = filtered_df.nominator_name[last_record_index]
-        df.at[last_record_index, "nominator_name"] = nominee
+        df.at[last_record_index,"drinker_name"] = filtered_df.nominator_name[last_record_index]
+        #commented out to prevent uno reverse of an uno reverse
+        # df.at[last_record_index, "nominator_name"] = nominee 
         df.at[last_record_index, "drink_type"] = "uno reverse"
 
     except IndexError as e:

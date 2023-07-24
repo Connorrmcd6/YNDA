@@ -332,5 +332,5 @@ with rules_tab:
                 2. Anyone who finishes last, or has a player that got a red card, scored an own goal or finished with negative points in their :red[**final 11**] will automatically be assigned a drink.
                 3. Anyone who falls under point two will be immune from further nominations for that game week.
                 4. At the start of the season everyone is given :red[**one**] "Uno Reverse Card". You can use this card to give a drink back to the person that nominated you if you do it :red[**before**] the deadline. 
-                5. [still voting ]You can Uno Reverse someone else's Uno Reverse if you both still have one.                    
+                5. You can't Uno Reverse someone else's Uno Reverse.                    
                 ''')
