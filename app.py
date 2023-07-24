@@ -303,7 +303,7 @@ with stats_tab:
         alt.Y('rank:O', axis=alt.Axis(title="League Rank")),
         alt.Color('player_name:N', legend=alt.Legend(
             orient='bottom',
-            columns=4,
+            columns=2,
             title=None)),
     )).interactive()
 
