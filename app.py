@@ -128,7 +128,7 @@ with st.sidebar:
                 st.error("You can't nominate yourself")
 
             elif nominator != st.session_state.first_place:
-                st.error("You did not win the gameweek")
+                st.error("You did not win the Game Week")
 
             elif nominee in st.session_state.red_cards:
                 st.error("This person got a red card, pick someone else")
@@ -183,7 +183,7 @@ with st.sidebar:
             if not select_box_validator(nominator):
                 st.error('Please fill in your name')
             elif nominator != st.session_state.first_place:
-                st.error("You did not win the gameweek")
+                st.error("You did not win the Game Week")
             else:
                 with st.spinner(text="Picking..."):
 
@@ -275,17 +275,15 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 
 
 with drinks_tab:
-    st.write("Latest Drinks")
+    st.header("Latest Drinks")
     st.table(st.session_state.drinks_display)
 
-    st.write("Uno Reverse Cards 🫵 🔄")
+    st.header("Uno Reverse Cards 🫵 🔄")
     st.table(st.session_state.uno)
 
 with stats_tab:
-    st.write("Total Drinks")
-
+    st.header("Total Drinks")
     df = categories(st.session_state.drinks)
-
     bar_chart = alt.Chart(df).mark_bar().encode(
         alt.X("Name:O", axis=alt.Axis(title="Name"), sort='-y'),
         alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
@@ -296,14 +294,12 @@ with stats_tab:
             title=None))
     )
     st.altair_chart(bar_chart, use_container_width=True)
-    st.divider()
 
-    st.write("Rank Chart Last 10 Game Weeks")
 
+    st.header("League Ranks")
     rank_df = build_rank_df(st.session_state.data, current_week)
-
     rank_chart = alt.Chart(rank_df).mark_line().encode(
-        alt.X('event:O', axis=alt.Axis(title="Gameweek")),
+        alt.X('event:O', axis=alt.Axis(title="Game Week")),
         alt.Y('rank:O', axis=alt.Axis(title="League Rank")),
         alt.Color('player_name:N', legend=alt.Legend(
             title=None)),
@@ -311,7 +307,7 @@ with stats_tab:
 
     st.altair_chart(rank_chart, use_container_width=True)
 
-    st.table(rank_df)
+
 with awards_tab:
     col1, col2, = st.columns(2)
 
@@ -332,7 +328,7 @@ with awards_tab:
                 help='Longest drinks streak of the season')
 
     col2.metric("The Bot Award", f"{lowest_score_player_name}",
-                help=f"{lowest_score_player_name} had the worst gameweek of the season with just {lowest_score_points} points in gameweek {lowest_score_event}")
+                help=f"{lowest_score_player_name} had the worst Game Week of the season with just {lowest_score_points} points in Game Week {lowest_score_event}")
 
 
 with rules_tab:
