@@ -16,7 +16,7 @@ gs_connection = connect_to_gs(st.secrets['gcp_service_account'])
 # use this section to update all google sheets data to latest data
 
 if "current_week" not in st.session_state:
-    current_week = 7  # change to function
+    current_week = 38  # change to function
     st.session_state.current_week = current_week
 else:
     current_week = st.session_state.current_week
@@ -296,12 +296,22 @@ with stats_tab:
             title=None))
     )
     st.altair_chart(bar_chart, use_container_width=True)
-    # st.divider()
+    st.divider()
 
     st.write("Rank Chart Last 10 Game Weeks")
-    data = np.random.randn(10, 1)
-    st.line_chart(data)
 
+    rank_df = build_rank_df(st.session_state.data, current_week)
+
+    rank_chart = alt.Chart(rank_df).mark_line().encode(
+        alt.X('event:O', axis=alt.Axis(title="Gameweek")),
+        alt.Y('rank:O', axis=alt.Axis(title="League Rank")),
+        alt.Color('player_name:N', legend=alt.Legend(
+            title=None)),
+    )
+
+    st.altair_chart(rank_chart, use_container_width=True)
+
+    st.table(rank_df)
 with awards_tab:
     col1, col2, = st.columns(2)
 

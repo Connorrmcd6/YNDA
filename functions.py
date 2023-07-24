@@ -237,3 +237,8 @@ def uno_reverse(gc, df, sheet_key, nominee):
     except Exception as e:
         print("An error occurred:", e)
         return None
+
+def build_rank_df(gameweek_df, current_week):
+    last_10 = gameweek_df[gameweek_df.event >= current_week -10].iloc[:,[0,2,4]]
+    last_10['rank'] = last_10.groupby(['event'])['total_points'].rank(ascending=False)
+    return last_10
