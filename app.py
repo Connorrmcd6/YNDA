@@ -282,7 +282,8 @@ with drinks_tab:
     st.table(st.session_state.uno)
 
 with stats_tab:
-    st.header("Total Drinks")
+    st.header("Total Drinks",
+              help="Number of drinks completed on time, completed late and not completed for each person")
     df = categories(st.session_state.drinks)
     bar_chart = alt.Chart(df).mark_bar().encode(
         alt.X("Name:O", axis=alt.Axis(title="Name"), sort='-y'),
@@ -295,7 +296,8 @@ with stats_tab:
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
-    st.header("League Ranks")
+    st.header("League Ranks",
+              help='Each line represents a player, the higher the line the higher your rank in the league')
     rank_df = build_rank_df(st.session_state.data, current_week)
 
     rank_chart = alt.layer(alt.Chart(rank_df).mark_line().encode(
@@ -309,28 +311,29 @@ with stats_tab:
 
     st.altair_chart(rank_chart, use_container_width=True)
 
+    # st.header("Most Valuable Teams", help='Total Team Value Over Time')
 
 with awards_tab:
     col1, col2, = st.columns(2)
 
     # column 1
-    col1.metric("Golden Boot", f"{most_1st_place_player}",
-                help=f'{most_1st_place_player} has finished first more than anyone else this season with a total of {most_1st_place_count} wins')
+    col1.metric("The Golden Boot", f"{most_1st_place_player}",
+                help=f'{most_1st_place_player} has the most first place finishes ({most_1st_place_count} times)')
 
-    col1.metric("Relegation Warrior", f'{most_last_place_player}',
-                help=f'{most_last_place_player} has finished last more than anyone else this season with a total of {most_last_place_count} last place finishes')
+    col1.metric("The Relegation Warrior", f'{most_last_place_player}',
+                help=f'{most_last_place_player} has the most last place finishes ({most_last_place_count} times)')
 
-    col1.metric("The Origi Award", f'{player_with_highest_points_on_bench}',
-                help=f'{player_with_highest_points_on_bench} has accumulated the most points on bench this season with a total of {player_with_highest_points_on_bench_count} points')
+    col1.metric("The Warmest Bench", f'{player_with_highest_points_on_bench}',
+                help=f'{player_with_highest_points_on_bench} has accumulated the most bench points ({player_with_highest_points_on_bench_count} points)')
     # column 2
-    col2.metric("The Chelsea Award", f"{player_with_highest_cost}",
-                help=f'{player_with_highest_cost} has taken the most hits this season, sacrificing a total of {player_with_highest_cost_count} points')
+    col2.metric("The Big Hitter", f"{player_with_highest_cost}",
+                help=f'{player_with_highest_cost} has taken the most hits ({player_with_highest_cost_count} points)')
 
-    col2.metric("Serial Streaker", "Cole Floyd",
-                help='Longest drinks streak of the season')
+    col2.metric("The Speed Demon", "Cole Floyd",
+                help=f'Cole Floyd has the fastest time complete a nominination (1 day 3 hours)')
 
-    col2.metric("The Bot Award", f"{lowest_score_player_name}",
-                help=f"{lowest_score_player_name} had the worst Game Week of the season with just {lowest_score_points} points in Game Week {lowest_score_event}")
+    col2.metric("The Wooden Boot", f"{lowest_score_player_name}",
+                help=f"{lowest_score_player_name} had the worst game week of the season (game week {lowest_score_event}: {lowest_score_points} points)")
 
 
 with rules_tab:
