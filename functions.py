@@ -24,8 +24,6 @@ def connect_to_gs(service_account_key):
 
 
 # function to fetch data from google sheets
-
-
 def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -56,8 +54,6 @@ def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
 
 
 # function to write data to google sheets
-
-
 def write_google_sheets_data(gc, df, sheet_name, sheet_key):
     try:
         # Open specific sheet
@@ -83,8 +79,6 @@ def write_google_sheets_data(gc, df, sheet_name, sheet_key):
 
 
 # function to return season metrics
-
-
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -157,8 +151,6 @@ def create_metrics(df):
 
 
 # function to validate select box choices
-
-
 def select_box_validator(input):
     if input == "":
         return False
@@ -166,7 +158,7 @@ def select_box_validator(input):
         return True
 
 
-def submit_drink(gc, df, sheet_key, nominee):
+def submit_drink(gc, df, sheet_key, nominee, drink_size):
     try:
         filtered_df = df[
             (df["drinker_name"] == nominee)
@@ -176,6 +168,7 @@ def submit_drink(gc, df, sheet_key, nominee):
         df.at[last_record_index, "nomination_completed_date"] = (
             datetime.now() + timedelta(hours=2)
         ).strftime("%d/%m/%y %H:%M")
+        df.at[last_record_index, "drink_size"] = drink_size
     except IndexError as e:
         r = "You dont have any outstanding drinks"
         return r
@@ -203,7 +196,7 @@ def submit_drink(gc, df, sheet_key, nominee):
 
 
 def categories(df):
-    df["Drinks"] = 1
+    df["quantity"] = 1
     df = df.iloc[:, [2, 5, 6, 7]]
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
     # Define the conditions for the new column
@@ -222,8 +215,6 @@ def categories(df):
 
 
 # uno reverse function, finds last incompleted record from drinks table and switches the nominator and nominee name
-
-
 def uno_reverse(gc, df, sheet_key, nominee):
     try:
         filtered_df = df[
@@ -272,3 +263,34 @@ def build_rank_df(gameweek_df, current_week):
         last_10.groupby(["event"])["total_points"].rank(ascending=False).astype(int)
     )
     return last_10
+
+
+def compute_laps(df):
+    # Filter rows with relevant columns and non-null values
+    drinks_lap_times = df[['event', 'drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
+                          'start_time', 'end_time', 'drink_size']].dropna()
+
+    # Filter rows with valid nomination completion date
+    drinks_lap_times = drinks_lap_times[drinks_lap_times['nomination_completed_date'] < drinks_lap_times['nomination_deadline_date']]
+
+    # Compute the lap times
+    drinks_lap_times['completion_time'] = np.round((drinks_lap_times['end_time'] - drinks_lap_times['start_time']) * (330 / drinks_lap_times['drink_size']), 3)
+
+    # Sort by completion_time
+    drinks_lap_times = drinks_lap_times.sort_values(by='completion_time')
+
+    # Compute the gap from the fastest time
+    fastest_time = drinks_lap_times['completion_time'].min()
+    drinks_lap_times['gap'] = drinks_lap_times['completion_time'] - fastest_time
+    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}" if pd.notna(x) and x != 0 else '')
+
+    # Select and format the relevant columns
+    display_times = drinks_lap_times[['event', 'drinker_name', 'completion_time', 'gap']]
+    display_times.index = np.arange(1, len(display_times) + 1)
+
+    # Rename the columns
+    display_times.rename(
+        columns={"event": "Game Week", "drinker_name": "Driver", "completion_time": "Lap Time", "gap": "Gap"},
+        inplace=True
+    )
+    return display_times

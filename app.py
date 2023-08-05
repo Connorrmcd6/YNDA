@@ -102,7 +102,7 @@ else:
 if "drinks" not in st.session_state:
     # fetch gameweek data
     drinks = fetch_google_sheets_data(
-        gs_connection, drinks_table, google_sheet_key, ["event"]
+        gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time']
     )
     drinks_display = drinks[drinks.event > current_week - 3]
     drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
@@ -257,7 +257,7 @@ with st.sidebar:
                             "Not Completed",
                         ],
                     }
-
+                
                     df = pd.DataFrame(data)
                     write_google_sheets_data(
                         gs_connection, df, drinks_table, google_sheet_key
@@ -286,6 +286,10 @@ with st.sidebar:
     drink_submitter = st.selectbox(
         label="Your Name", options=managers, key="submit_name"
     )
+
+    drink_size = st.text_input(
+        label="Drink Size (ml)", key="drink_size", value=330,
+    )
     button_container = st.container()
     with button_container:
         left_button, right_button = st.columns([1, 1])
@@ -297,7 +301,9 @@ with st.sidebar:
                         st.session_state.drinks,
                         google_sheet_key,
                         drink_submitter,
+                        drink_size,
                     )
+
                     if r == None:
                         st.success("Done")
                     else:
@@ -337,14 +343,19 @@ with stats_tab:
         "Total Drinks",
         help="Number of drinks completed on time, completed late and not completed for each person",
     )
-    df = categories(st.session_state.drinks)
+    if "drinks_chart" not in st.session_state:
+        df = categories(st.session_state.drinks)
+        st.session_state.drinks_chart = df
+    else:
+        df = st.session_state.drinks_chart
+
     bar_chart = (
         alt.Chart(df)
         .mark_bar()
         .encode(
             alt.X("Name:O", axis=alt.Axis(title="Name"), sort="-y"),
-            alt.Y("sum(Drinks):Q", axis=alt.Axis(title="Total Drinks")),
-            alt.Order("sum(Drinks):Q", sort="descending"),
+            alt.Y("sum(quantity):Q", axis=alt.Axis(title="Total Drinks")),
+            alt.Order("sum(quantity):Q", sort="descending"),
             alt.Color(
                 "Category:N",
                 legend=alt.Legend(orient="top", direction="horizontal", title=None),
@@ -357,7 +368,14 @@ with stats_tab:
         "League Ranks",
         help="Each line represents a player, the higher the line the higher your rank in the league",
     )
-    rank_df = build_rank_df(st.session_state.data, current_week)
+
+    if "rank_chart" not in st.session_state:
+        rank_df = build_rank_df(st.session_state.data, current_week)
+        st.session_state.rank_chart = rank_df
+    else:
+        rank_df = st.session_state.rank_chart
+
+    # rank_df = build_rank_df(st.session_state.data, current_week)
 
     rank_chart = alt.layer(
         alt.Chart(rank_df)
@@ -374,7 +392,9 @@ with stats_tab:
 
     st.altair_chart(rank_chart, use_container_width=True)
 
-    # st.header("Most Valuable Teams", help='Total Team Value Over Time')
+    st.header("Fastest Lap Times")
+    
+    st.table(compute_laps(st.session_state.drinks))
 
 with awards_tab:
     (
