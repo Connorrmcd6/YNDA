@@ -13,21 +13,23 @@ import altair as alt
 from configs import *
 
 
+#'''------------------------------------------------------------CACHE FUNCTIONS------------------------------------------------------------'''
+
 # function to create api connection to google sheets
-def connect_to_gs(service_account_key):
+@st.cache_resource(max_entries = 1,)
+def connect_to_gs(_service_account_key):
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_key, scopes=scopes
-    )
+    credentials = service_account.Credentials.from_service_account_info(_service_account_key, scopes=scopes)
     gs_connection = gspread.authorize(credentials)
     return gs_connection
 
 
-# function to fetch data from google sheets
-def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
+# function to fetch gw data from google sheets
+@st.cache_data(max_entries = 1,)
+def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
-        gs = gc.open_by_key(sheet_key)
+        gs = _gc.open_by_key(sheet_key)
 
         # Open specific tab within the sheet
         tab = gs.worksheet(sheet_name)
@@ -53,25 +55,110 @@ def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
         return None
 
 
-# function to write data to google sheets
-def write_google_sheets_data(gc, df, sheet_name, sheet_key):
+# function to fetch drinks data from google sheets
+@st.cache_data(ttl='12h', max_entries = 1,)
+def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
-        gs = gc.open_by_key(sheet_key)
+        gs = _gc.open_by_key(sheet_key)
 
         # Open specific tab within the sheet
         tab = gs.worksheet(sheet_name)
 
-        df_values = df.values.tolist()
-        gs.values_append(sheet_name, {"valueInputOption": "RAW"}, {"values": df_values})
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
 
-        return None
+        # to handle numeric columns that are imported as strings
+        for column in columns_list:
+            df[column] = pd.to_numeric(df[column])
+
+        return df
 
     except gspread.exceptions.APIError as e:
         print("Error accessing Google Sheets API:", e)
         return None
     except gspread.exceptions.WorksheetNotFound as e:
-        print(f"Error: Worksheet not found, please create a new tab named:", e)
+        print("Error: Worksheet not found:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+#build drinks display table
+@st.cache_data(ttl='12h', max_entries = 1,)
+def build_drinks_display(drinks, current_week):
+    drinks_display = drinks[drinks.event > current_week - 3]
+    drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
+    drinks_display.rename(
+        columns={
+            "event": "Game Week",
+            "drinker_name": "Name",
+            "drink_type": "Drink Type",
+            "nomination_deadline_date": "Deadline",
+            "nomination_completed_date": "Completed Date",
+        },
+        inplace=True,
+        )
+    return drinks_display
+
+
+# function to fetch managers from google sheets
+@st.cache_data(ttl='12h', max_entries = 1,)
+def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
+    try:
+        # Open specific sheet
+        gs = _gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
+
+        # to handle numeric columns that are imported as strings
+        for column in columns_list:
+            df[column] = pd.to_numeric(df[column])
+
+        return df
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print("Error: Worksheet not found:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+
+# function to fetch uno data from google sheets
+@st.cache_data(ttl='12h', max_entries = 1,)
+def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
+    try:
+        # Open specific sheet
+        gs = _gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
+
+        # to handle numeric columns that are imported as strings
+        for column in columns_list:
+            df[column] = pd.to_numeric(df[column])
+
+        return df
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print("Error: Worksheet not found:", e)
         return None
     except Exception as e:
         print("An error occurred:", e)
@@ -79,6 +166,7 @@ def write_google_sheets_data(gc, df, sheet_name, sheet_key):
 
 
 # function to return season metrics
+@st.cache_data(ttl='12h', max_entries = 1,)
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -150,6 +238,67 @@ def create_metrics(df):
     )
 
 
+@st.cache_data(ttl='1d',max_entries=1)
+#checks the latest data to see if it needs to be refreshed
+def fetch_max_gw(_gc, sheet_name, sheet_key):
+    try:
+        # Open specific sheet
+        gs = _gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
+
+        # Convert the first column to numeric
+        df[headers[0]] = pd.to_numeric(df[headers[0]])
+
+        # Get the maximum value of the first column
+        max_value = df[headers[0]].max()
+
+        return max_value
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print("Error: Worksheet not found:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+
+#'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
+
+
+# function to write data to google sheets
+def write_google_sheets_data(_gc, df, sheet_name, sheet_key):
+    try:
+        # Open specific sheet
+        gs = _gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        df_values = df.values.tolist()
+        gs.values_append(sheet_name, {"valueInputOption": "RAW"}, {"values": df_values})
+
+        return None
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"Error: Worksheet not found, please create a new tab named:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+
 # function to validate select box choices
 def select_box_validator(input):
     if input == "":
@@ -158,7 +307,7 @@ def select_box_validator(input):
         return True
 
 
-def submit_drink(gc, df, sheet_key, nominee, drink_size):
+def submit_drink(_gc, df, sheet_key, nominee, drink_size):
     try:
         filtered_df = df[
             (df["drinker_name"] == nominee)
@@ -175,7 +324,7 @@ def submit_drink(gc, df, sheet_key, nominee, drink_size):
 
     try:
         # Open specific sheet
-        gs = gc.open_by_key(sheet_key)
+        gs = _gc.open_by_key(sheet_key)
 
         # Open specific tab within the sheet
         tab = gs.worksheet("drinks")
@@ -214,36 +363,48 @@ def categories(df):
     return df
 
 
-# uno reverse function, finds last incompleted record from drinks table and switches the nominator and nominee name
-def uno_reverse(gc, df, sheet_key, nominee):
+def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
     try:
-        filtered_df = df[
-            (df["drinker_name"] == nominee)
-            & (df["nomination_completed_date"] == "Not Completed")
+        # Find the last record for the specified nominee with "Not Completed" nomination
+        filtered_drinks = drinks[
+            (drinks["drinker_name"] == nominee)
+            & (drinks["nomination_completed_date"] == "Not Completed")
         ]
-        last_record_index = filtered_df.index[-1]
+        last_record_index = filtered_drinks.index[-1]
 
-        df.at[last_record_index, "drinker_name"] = filtered_df.nominator_name[
+        # Perform the uno reverse operation on the last record
+        drinks.at[last_record_index, "drinker_name"] = filtered_drinks.nominator_name[
             last_record_index
         ]
-        # commented out to prevent uno reverse of an uno reverse
-        # df.at[last_record_index, "nominator_name"] = nominee
-        df.at[last_record_index, "drink_type"] = "uno reverse"
+        drinks.at[last_record_index, "drink_type"] = "uno reverse"
 
-    except IndexError as e:
-        r = "You dont have any outstanding drinks"
-        return r
+    except IndexError:
+        return "You don't have any outstanding drinks"
+
+    # Check if the nominee has already used their uno reverse card this season
+    try:
+        filtered_uno_data = uno_data[(uno_data["player_name"] == nominee)]
+        uno_index = uno_data[(uno_data["player_name"] == nominee)].index[0]
+
+        if filtered_uno_data.iloc[0, 1] == 'No':
+            raise Exception("You have already used your uno reverse card this season")
+        else: 
+            # Use a single equal sign (=) for assignment
+            uno_data.at[uno_index, 'uno_reverse'] = 'No'
+    except Exception as e:
+        print(e)
 
     try:
         # Open specific sheet
         gs = gc.open_by_key(sheet_key)
 
         # Open specific tab within the sheet
-        tab = gs.worksheet("drinks")
+        drinks_tab = gs.worksheet("drinks")
+        uno_tab =  gs.worksheet("managers")
 
-        set_with_dataframe(tab, df)
-
-        return None
+        # Update the Google Sheet with the modified drinks DataFrame
+        set_with_dataframe(drinks_tab, drinks)
+        set_with_dataframe(uno_tab, uno_data)
 
     except gspread.exceptions.APIError as e:
         print("Error accessing Google Sheets API:", e)
@@ -255,6 +416,9 @@ def uno_reverse(gc, df, sheet_key, nominee):
         print("An error occurred:", e)
         return None
 
+    return None
+
+
 
 def build_rank_df(gameweek_df, current_week):
     last_10 = gameweek_df[gameweek_df.event >= current_week - 10].iloc[:, [0, 2, 4]]
@@ -265,9 +429,9 @@ def build_rank_df(gameweek_df, current_week):
     return last_10
 
 
-def compute_laps(df):
+def build_laps(df):
     # Filter rows with relevant columns and non-null values
-    drinks_lap_times = df[['event', 'drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
+    drinks_lap_times = df[['drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
                           'start_time', 'end_time', 'drink_size']].dropna()
 
     # Filter rows with valid nomination completion date
@@ -285,12 +449,13 @@ def compute_laps(df):
     drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}" if pd.notna(x) and x != 0 else '')
 
     # Select and format the relevant columns
-    display_times = drinks_lap_times[['event', 'drinker_name', 'completion_time', 'gap']]
+    display_times = drinks_lap_times[[ 'drinker_name', 'completion_time', 'gap']]
     display_times.index = np.arange(1, len(display_times) + 1)
 
     # Rename the columns
     display_times.rename(
-        columns={"event": "Game Week", "drinker_name": "Driver", "completion_time": "Lap Time", "gap": "Gap"},
+        columns={"drinker_name": "Driver", "completion_time": "Lap Time", "gap": "Gap"},
         inplace=True
     )
     return display_times
+

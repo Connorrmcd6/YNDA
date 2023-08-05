@@ -1,5 +1,7 @@
 from functions import *
 from configs import *
+import time
+
 
 #'''------------------------------------------------------------PAGE CONFIGS------------------------------------------------------------'''
 st.set_page_config(
@@ -8,122 +10,49 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
     page_icon="🍺",
 )
+start = time.time()
+#'''------------------------------------------------------------CACHE------------------------------------------------------------'''
 
-#'''------------------------------------------------------------GOOGLE CONNECTION------------------------------------------------------------'''
+#'''------------------------------------------------------------cached resources------------------------------------------------------------'''
 gs_connection = connect_to_gs(st.secrets["gcp_service_account"])
+#fpl session here if needed
 
 
-#'''------------------------------------------------------------FPL API CALLS------------------------------------------------------------'''
-# use this section to update all google sheets data to latest data
 
-if "current_week" not in st.session_state:
-    current_week = 38  # change to function
-    st.session_state.current_week = current_week
+#'''------------------------------------------------------------cached data------------------------------------------------------------'''
+
+#caching data
+max_stored_gw = fetch_max_gw(gs_connection, gameweek_results_table, google_sheet_key)
+current_week = 38 #
+#find event number of is_current week:
+
+if max_stored_gw > current_week:
+    #update data from fpl
+    print('couldnt fetch data from fpl')
 else:
-    current_week = st.session_state.current_week
-
-
-#'''------------------------------------------------------------GOOGLE API CALLS------------------------------------------------------------'''
-if "managers" not in st.session_state:
-    managers = sorted(
-        fetch_google_sheets_data(gs_connection, managers_table, google_sheet_key, [])[
-            "player_name"
-        ]
-    )
-    managers.insert(0, "")
-    st.session_state.managers = managers
-else:
-    managers = st.session_state.managers
-
-
-if "uno" not in st.session_state:
-    uno = (
-        fetch_google_sheets_data(gs_connection, managers_table, google_sheet_key, [])
-        .iloc[:, [1, 3]]
-        .sort_values(["uno_reverse", "player_name"], ascending=(False, True))
-    )
-    uno.rename(
-        columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True
-    )
-    # uno_display = uno.iloc[:, [ 1, 3]].sort_values(['uno_reverse', 'player_name'], ascending=(False, True))
-    # uno_display.rename(columns={'player_name': 'Name', 'uno_reverse': "Has used Uno Reverse"}, inplace=True)
-    # st.session_state.uno_display = uno_display
-    st.session_state.uno = uno
-else:
-    uno = st.session_state.uno
-    # uno_display = st.session_state.uno_display
-
-
-if "last_place" not in st.session_state:
-    last_place = "Alex Wietzorrek"  # change to function
-    st.session_state.last_place = last_place
-else:
-    last_place = st.session_state.last_place
-
-if "first_place" not in st.session_state:
-    first_place = "Ryan Shacks"  # change to function
-    st.session_state.first_place = first_place
-else:
-    first_place = st.session_state.first_place
-
-
-if "red_cards" not in st.session_state:
-    red_cards = []  # change to function
-    st.session_state.red_cards = red_cards
-else:
-    red_cards = st.session_state.red_cards
-
-if "own_goals" not in st.session_state:
-    own_goals = []  # change to function
-    st.session_state.own_goals = own_goals
-else:
-    own_goals = st.session_state.own_goals
-
-if "negative_points" not in st.session_state:
-    negative_points = []  # change to function
-    st.session_state.negative_points = negative_points
-else:
-    negative_points = st.session_state.negative_points
-
-
-if "data" not in st.session_state:
-    # fetch gameweek data
-    gameweek_df = fetch_google_sheets_data(
+    gameweek_df = fetch_gameweek_data(
         gs_connection,
         gameweek_results_table,
         google_sheet_key,
         ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"],
     )
-    st.session_state.data = gameweek_df
+    
 
-else:
-    gameweek_df = st.session_state.data
+drinks = fetch_drinks_data(gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
 
-if "drinks" not in st.session_state:
-    # fetch gameweek data
-    drinks = fetch_google_sheets_data(
-        gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time']
-    )
-    drinks_display = drinks[drinks.event > current_week - 3]
-    drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
-    drinks_display.rename(
-        columns={
-            "event": "Game Week",
-            "drinker_name": "Name",
-            "drink_type": "Drink Type",
-            "nomination_deadline_date": "Deadline",
-            "nomination_completed_date": "Completed Date",
-        },
-        inplace=True,
-    )
-    st.session_state.drinks_display = drinks_display
-    st.session_state.drinks = drinks
+drinks_display = build_drinks_display(drinks, current_week)
+drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
-else:
-    drinks_display = st.session_state.drinks_display
-    drinks = st.session_state.drinks
 
-# generate gameweek metrics
+managers = sorted(fetch_manager_data(gs_connection, managers_table, google_sheet_key, [])["player_name"])
+managers.insert(0, "")
+
+uno_data = fetch_uno_data(gs_connection, managers_table, google_sheet_key, [])
+uno_data_display = uno_data.iloc[:, [1, 3]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
+uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
+uno_data_display.index = np.arange(1, len(uno_data) + 1)
+
+
 (
     most_1st_place_player,
     most_1st_place_count,
@@ -137,6 +66,51 @@ else:
     lowest_score_event,
     lowest_score_points,
 ) = create_metrics(gameweek_df)
+
+
+
+#'''------------------------------------------------------------WORK IN PROGRESS-----------------------------------------------------------'''
+
+
+
+if "last_place" not in st.session_state:
+    last_place = "Alex Wietzorrek"  # change to function
+    st.session_state.last_place = last_place
+else:
+    last_place = st.session_state.last_place
+
+
+
+if "first_place" not in st.session_state:
+    first_place = "Ryan Shacks"  # change to function
+    st.session_state.first_place = first_place
+else:
+    first_place = st.session_state.first_place
+
+
+
+if "red_cards" not in st.session_state:
+    red_cards = []  # change to function
+    st.session_state.red_cards = red_cards
+else:
+    red_cards = st.session_state.red_cards
+
+
+
+if "own_goals" not in st.session_state:
+    own_goals = []  # change to function
+    st.session_state.own_goals = own_goals
+else:
+    own_goals = st.session_state.own_goals
+
+
+
+if "negative_points" not in st.session_state:
+    negative_points = []  # change to function
+    st.session_state.negative_points = negative_points
+else:
+    negative_points = st.session_state.negative_points
+
 
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 with st.sidebar:
@@ -196,14 +170,6 @@ with st.sidebar:
                     write_google_sheets_data(
                         gs_connection, df, drinks_table, google_sheet_key
                     )
-
-                    # refresh table
-                    # drinks = fetch_google_sheets_data(gs_connection, drinks_table, google_sheet_key, ["event"])
-                    # drinks_display = drinks[drinks.event > current_week - 3]
-                    # drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
-                    # drinks_display.rename(columns={'event': 'Game Week', 'drink_name': "Name", "drink_type": "Drink Type","nomination_deadline_date": "Deadline", "nomination_completed_date": "Completed Date"}, inplace=True)
-                    # st.session_state.drinks_display = drinks_display
-                    # st.session_state.drinks = drinks
                     st.session_state.nominate = True
                     st.success("Nomination Submitted")
         else:
@@ -263,13 +229,6 @@ with st.sidebar:
                         gs_connection, df, drinks_table, google_sheet_key
                     )
 
-                    # drinks = fetch_google_sheets_data(gs_connection, drinks_table, google_sheet_key, ["event"])
-                    # drinks_display = drinks[drinks.event > current_week - 3]
-                    # drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
-                    # drinks_display.rename(columns={'event': 'Game Week', 'drink_name': "Name", "drink_type": "Drink Type","nomination_deadline_date": "Deadline", "nomination_completed_date": "Completed Date"}, inplace=True)
-                    # st.session_state.drinks_display = drinks_display
-                    # st.session_state.drinks = drinks
-
                     st.session_state.nominate = True
 
                     st.text(f"1.{random_nominees[0]}")
@@ -298,7 +257,7 @@ with st.sidebar:
                 with st.spinner(text="Submitting..."):
                     r = submit_drink(
                         gs_connection,
-                        st.session_state.drinks,
+                        drinks,
                         google_sheet_key,
                         drink_submitter,
                         drink_size,
@@ -316,7 +275,8 @@ with st.sidebar:
                     with st.spinner(text="Reversing..."):
                         r = uno_reverse(
                             gs_connection,
-                            st.session_state.drinks,
+                            drinks,
+                            uno_data,
                             google_sheet_key,
                             drink_submitter,
                         )
@@ -333,10 +293,10 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 
 with drinks_tab:
     st.header("Latest Drinks")
-    st.table(st.session_state.drinks_display)
+    st.table(drinks_display)
 
     st.header("Uno Reverse Cards 🫵 🔄")
-    st.table(st.session_state.uno)
+    st.table(uno_data_display)
 
 with stats_tab:
     st.header(
@@ -344,7 +304,7 @@ with stats_tab:
         help="Number of drinks completed on time, completed late and not completed for each person",
     )
     if "drinks_chart" not in st.session_state:
-        df = categories(st.session_state.drinks)
+        df = categories(drinks)
         st.session_state.drinks_chart = df
     else:
         df = st.session_state.drinks_chart
@@ -370,12 +330,10 @@ with stats_tab:
     )
 
     if "rank_chart" not in st.session_state:
-        rank_df = build_rank_df(st.session_state.data, current_week)
+        rank_df = build_rank_df(gameweek_df, current_week)
         st.session_state.rank_chart = rank_df
     else:
         rank_df = st.session_state.rank_chart
-
-    # rank_df = build_rank_df(st.session_state.data, current_week)
 
     rank_chart = alt.layer(
         alt.Chart(rank_df)
@@ -394,7 +352,7 @@ with stats_tab:
 
     st.header("Fastest Lap Times")
     
-    st.table(compute_laps(st.session_state.drinks))
+    st.table(build_laps(drinks))
 
 with awards_tab:
     (
@@ -451,3 +409,5 @@ with rules_tab:
                 5. You can't Uno Reverse someone else's Uno Reverse.                    
                 """
     )
+end = time.time()
+print(end - start)
