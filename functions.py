@@ -386,13 +386,14 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
         filtered_uno_data = uno_data[(uno_data["player_name"] == nominee)]
         uno_index = uno_data[(uno_data["player_name"] == nominee)].index[0]
 
-        if filtered_uno_data.iloc[0, 1] == 'No':
+        if filtered_uno_data.iloc[0, 3] == 'No':
             raise Exception("You have already used your uno reverse card this season")
         else: 
             # Use a single equal sign (=) for assignment
             uno_data.at[uno_index, 'uno_reverse'] = 'No'
     except Exception as e:
-        print(e)
+        return e
+
 
     try:
         # Open specific sheet
