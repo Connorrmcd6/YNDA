@@ -177,7 +177,7 @@ with st.sidebar:
 
     st.header("OR")
 
-    if st.button("🔄 Randomly pick 3"):
+    if st.button("Randomly pick 3"):
         if "nominate" not in st.session_state:
             if not select_box_validator(nominator):
                 st.error("Please fill in your name")
@@ -240,7 +240,7 @@ with st.sidebar:
 
     st.divider()
 
-    st.header("🍺 Submissions")
+    st.header("🍺 Submit Drinks")
 
     drink_submitter = st.selectbox(
         label="Your Name", options=managers, key="submit_name"
@@ -268,7 +268,7 @@ with st.sidebar:
                     else:
                         st.error(r)
         with right_button:
-            if st.button(label="🫵 Uno", key="uno_reverse"):
+            if st.button(label="Uno", key="uno_reverse"):
                 if not select_box_validator(drink_submitter):
                     st.error("Please fill in your name")
                 else:
@@ -292,10 +292,12 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 
 
 with drinks_tab:
-    st.header("Latest Drinks")
+    st.header("Latest Drinks",
+              help='Drinks for the last 2 game weeks')
     st.table(drinks_display)
 
-    st.header("Uno Reverse Cards 🫵 🔄")
+    st.header("Uno Reverse Cards",
+              help='List of players and if they have used their uno reverse card or not')
     st.table(uno_data_display)
 
 with stats_tab:
@@ -326,7 +328,7 @@ with stats_tab:
 
     st.header(
         "League Ranks",
-        help="Each line represents a player, the higher the line the higher your rank in the league",
+        help="Each line represents a player, the higher the line the higher your rank in the league for that game week",
     )
 
     if "rank_chart" not in st.session_state:
@@ -350,7 +352,8 @@ with stats_tab:
 
     st.altair_chart(rank_chart, use_container_width=True)
 
-    st.header("Fastest Lap Times")
+    st.header("Fastest Lap Times",
+              help="Time to complete a down scaled to 330mls ex. if you drank a 500ml in 5s your time will be listed as (330/500)x(5) = 3.3s")
     
     st.table(build_laps(drinks))
 
@@ -402,11 +405,12 @@ with rules_tab:
     st.markdown(
         """
                 ## Rules of the game
-                1. The winner of each week can nominate one person of their choice or randomly nominate three people (with the chance of picking themselves).
-                2. Anyone who finishes last, or has a player that got a red card, scored an own goal or finished with negative points in their :red[**final 11**] will automatically be assigned a drink.
-                3. Anyone who falls under point two will be immune from further nominations for that game week.
-                4. At the start of the season everyone is given :red[**one**] "Uno Reverse Card". You can use this card to give a drink back to the person that nominated you if you do it :red[**before**] the deadline. 
-                5. You can't Uno Reverse someone else's Uno Reverse.                    
+                1. First place for each week can nominate one person of their choice or randomly nominate three people (with the chance of picking themselves).
+                2. Last place for each week will be assigned a drink.
+                3. If you have a player with a red card, own goal, or negative points in your :red[**final 11**], you will be assigned a drink
+                4. If you want to be included on the lap times leaderboard you will need to have a stop watch visibile in your video submission.
+                5. Everyone gets one Uno reverse card per season. You can use this to give your drink back to the person that nominated you. As long as you do it within 2 days of nomination.
+                6. You can't Uno reverse someone else's Uno reverse.    
                 """
     )
 end = time.time()

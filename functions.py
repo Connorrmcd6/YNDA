@@ -88,7 +88,7 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
 #build drinks display table
 @st.cache_data(ttl='12h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
-    drinks_display = drinks[drinks.event > current_week - 3]
+    drinks_display = drinks[drinks.event > current_week - 2]
     drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
     drinks_display.rename(
         columns={
@@ -314,9 +314,7 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
             & (df["nomination_completed_date"] == "Not Completed")
         ]
         last_record_index = filtered_df.index[-1]
-        df.at[last_record_index, "nomination_completed_date"] = (
-            datetime.now() + timedelta(hours=2)
-        ).strftime("%d/%m/%y %H:%M")
+        df.at[last_record_index, "nomination_completed_date"] = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M")
         df.at[last_record_index, "drink_size"] = drink_size
     except IndexError as e:
         r = "You dont have any outstanding drinks"
@@ -370,10 +368,14 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
             (drinks["drinker_name"] == nominee)
             & (drinks["nomination_completed_date"] == "Not Completed")
         ]
+        
+        if filtered_drinks.empty:
+            return "You don't have any outstanding drinks"
+
         last_record_index = filtered_drinks.index[-1]
 
         # Perform the uno reverse operation on the last record
-        drinks.at[last_record_index, "drinker_name"] = filtered_drinks.nominator_name[
+        drinks.at[last_record_index, "drinker_name"] = filtered_drinks["nominator_name"][
             last_record_index
         ]
         drinks.at[last_record_index, "drink_type"] = "uno reverse"
@@ -384,15 +386,24 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
     # Check if the nominee has already used their uno reverse card this season
     try:
         filtered_uno_data = uno_data[(uno_data["player_name"] == nominee)]
-        uno_index = uno_data[(uno_data["player_name"] == nominee)].index[0]
+        if filtered_uno_data.empty:
+            raise Exception("You haven't used your uno reverse card this season")
 
-        if filtered_uno_data.iloc[0, 3] == 'No':
+        uno_index = filtered_uno_data.index[0]
+
+        if filtered_uno_data.iloc[0, uno_data.columns.get_loc('uno_reverse')] == 'No':
             raise Exception("You have already used your uno reverse card this season")
+
+        # Convert "nomination_created_date" to a datetime object for comparison
+        nomination_created_datetime = datetime.strptime(filtered_drinks.nomination_created_date.iloc[0], "%d/%m/%y %H:%M:%S")
+
+        if (datetime.now() + timedelta(hours=2)) > (nomination_created_datetime + timedelta(days=2)):
+            raise Exception("You took more than 2 days to use your uno reverse card, try again next time")
         else: 
             # Use a single equal sign (=) for assignment
             uno_data.at[uno_index, 'uno_reverse'] = 'No'
     except Exception as e:
-        return e
+        return str(e)
 
 
     try:
