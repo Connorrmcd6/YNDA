@@ -270,6 +270,12 @@ def fetch_max_gw(_gc, sheet_name, sheet_key):
         print("An error occurred:", e)
         return None
 
+@st.cache_data(ttl='1d',max_entries=1)
+def most_litres(df, name_col, qty_col):
+    grouped_data = df.groupby(name_col)[qty_col].sum()
+    highest_category = grouped_data.idxmax()
+    highest_sum = np.round(grouped_data.max()/1000, 2)
+    return highest_category, highest_sum
 
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
 

@@ -67,7 +67,7 @@ uno_data_display.index = np.arange(1, len(uno_data) + 1)
     lowest_score_points,
 ) = create_metrics(gameweek_df)
 
-
+most_litres_name, most_litres_qty = most_litres(drinks,"drinker_name", 'drink_size')
 
 #'''------------------------------------------------------------WORK IN PROGRESS-----------------------------------------------------------'''
 
@@ -385,19 +385,19 @@ with awards_tab:
     col2.metric(
         "The Big Hitter",
         f"{player_with_highest_cost}",
-        help=f"{player_with_highest_cost} has taken the most hits ({player_with_highest_cost_count} points)",
+        help=f"{player_with_highest_cost} has taken the most hits ({player_with_highest_cost_count/4:.0f} hits)",
     )
 
     col2.metric(
-        "The Speed Demon",
-        "Cole Floyd",
-        help=f"Cole Floyd has the fastest time complete a nominination (1 day 3 hours)",
+        "The Heavyweight",
+        f"{most_litres_name}",
+        help=f"{most_litres_name} has drank the most litres of beer this season ({most_litres_qty}ℓ)",
     )
 
     col2.metric(
         "The Wooden Boot",
         f"{lowest_score_player_name}",
-        help=f"{lowest_score_player_name} had the worst game week of the season (game week {lowest_score_event}: {lowest_score_points} points)",
+        help=f"{lowest_score_player_name} had the worst game week of the season ({lowest_score_points} points in game week {lowest_score_event})",
     )
 
 
