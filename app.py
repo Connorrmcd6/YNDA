@@ -14,32 +14,43 @@ start = time.time()
 #'''------------------------------------------------------------CACHE------------------------------------------------------------'''
 
 #'''------------------------------------------------------------cached resources------------------------------------------------------------'''
+#cached indefinitely
 gs_connection = connect_to_gs(st.secrets["gcp_service_account"])
-#fpl session here if needed
-
-
 
 #'''------------------------------------------------------------cached data------------------------------------------------------------'''
 
-#caching data
-max_stored_gw = fetch_max_gw(gs_connection, gameweek_results_table, google_sheet_key)
-current_week = 38 #
-#find event number of is_current week:
 
-if max_stored_gw > current_week:
-    #update data from fpl
-    print('couldnt fetch data from fpl')
+#the result of the update function is cached for 6 hours 
+if update(gs_connection) == True:
+    print('There is new data, google sheets will be updated now')
+    # gameweek_results_update()
+    # auto_drinks_update(current_week, last)
+    # managers_update()
+
+    # cached_variables.clear()
+    # first_place, last_place, redcards, own_goals, negative_points, current_week = cached_variables(first_place, last_place, redcards, own_goals, negative_points, current_week)
 else:
-    gameweek_df = fetch_gameweek_data(
+    print('Data in google sheets is up to date')
+    #create placeholders
+    first_place = 'Connor McDonald'
+    last_place = 'Alex Wietzorrek'
+    red_cards = []
+    own_goals = []
+    negative_points = []
+
+
+#cached for 
+current_week = fetch_max_gw(gs_connection, gameweek_results_table, google_sheet_key)
+
+
+gameweek_df = fetch_gameweek_data(
         gs_connection,
         gameweek_results_table,
         google_sheet_key,
-        ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"],
-    )
+        ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"],)
     
 
 drinks = fetch_drinks_data(gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
-
 drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
@@ -69,48 +80,6 @@ uno_data_display.index = np.arange(1, len(uno_data) + 1)
 
 most_litres_name, most_litres_qty = most_litres(drinks,"drinker_name", 'drink_size')
 
-#'''------------------------------------------------------------WORK IN PROGRESS-----------------------------------------------------------'''
-
-
-
-if "last_place" not in st.session_state:
-    last_place = "Alex Wietzorrek"  # change to function
-    st.session_state.last_place = last_place
-else:
-    last_place = st.session_state.last_place
-
-
-
-if "first_place" not in st.session_state:
-    first_place = "Ryan Shacks"  # change to function
-    st.session_state.first_place = first_place
-else:
-    first_place = st.session_state.first_place
-
-
-
-if "red_cards" not in st.session_state:
-    red_cards = []  # change to function
-    st.session_state.red_cards = red_cards
-else:
-    red_cards = st.session_state.red_cards
-
-
-
-if "own_goals" not in st.session_state:
-    own_goals = []  # change to function
-    st.session_state.own_goals = own_goals
-else:
-    own_goals = st.session_state.own_goals
-
-
-
-if "negative_points" not in st.session_state:
-    negative_points = []  # change to function
-    st.session_state.negative_points = negative_points
-else:
-    negative_points = st.session_state.negative_points
-
 
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 with st.sidebar:
@@ -132,19 +101,19 @@ with st.sidebar:
             elif nominator == nominee:
                 st.error("You can't nominate yourself")
 
-            elif nominator != st.session_state.first_place:
+            elif nominator != first_place:
                 st.error("You did not win the Game Week")
 
-            elif nominee in st.session_state.red_cards:
+            elif nominee in red_cards:
                 st.error("This person got a red card, pick someone else")
 
-            elif nominee in st.session_state.own_goals:
+            elif nominee in own_goals:
                 st.error("This person got an own goal, pick someone else")
 
-            elif nominee in st.session_state.negative_points:
+            elif nominee in negative_points:
                 st.error("This person got negative points, pick someone else")
 
-            elif nominee == st.session_state.last_place:
+            elif nominee == last_place:
                 st.error("This person came last, pick someone else")
 
             else:
@@ -181,7 +150,7 @@ with st.sidebar:
         if "nominate" not in st.session_state:
             if not select_box_validator(nominator):
                 st.error("Please fill in your name")
-            elif nominator != st.session_state.first_place:
+            elif nominator != first_place:
                 st.error("You did not win the Game Week")
             else:
                 with st.spinner(text="Picking..."):

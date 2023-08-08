@@ -10,6 +10,8 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import matplotlib.pyplot as plt
 import altair as alt
+from placeholder_events import *
+import requests
 from configs import *
 
 
@@ -25,7 +27,7 @@ def connect_to_gs(_service_account_key):
 
 
 # function to fetch gw data from google sheets
-@st.cache_data(max_entries = 1,)
+@st.cache_data(ttl='6h',max_entries = 1,)
 def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -56,7 +58,7 @@ def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to fetch drinks data from google sheets
-@st.cache_data(ttl='12h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -86,7 +88,7 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
         return None
 
 #build drinks display table
-@st.cache_data(ttl='12h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
     drinks_display = drinks[drinks.event > current_week - 2]
     drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
@@ -104,7 +106,7 @@ def build_drinks_display(drinks, current_week):
 
 
 # function to fetch managers from google sheets
-@st.cache_data(ttl='12h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -135,7 +137,7 @@ def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to fetch uno data from google sheets
-@st.cache_data(ttl='12h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -166,7 +168,7 @@ def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to return season metrics
-@st.cache_data(ttl='12h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -238,7 +240,7 @@ def create_metrics(df):
     )
 
 
-@st.cache_data(ttl='1d',max_entries=1)
+@st.cache_data(ttl='6h',max_entries=1)
 #checks the latest data to see if it needs to be refreshed
 def fetch_max_gw(_gc, sheet_name, sheet_key):
     try:
@@ -258,7 +260,7 @@ def fetch_max_gw(_gc, sheet_name, sheet_key):
         # Get the maximum value of the first column
         max_value = df[headers[0]].max()
 
-        return max_value
+        return int(max_value)
 
     except gspread.exceptions.APIError as e:
         print("Error accessing Google Sheets API:", e)
@@ -270,13 +272,43 @@ def fetch_max_gw(_gc, sheet_name, sheet_key):
         print("An error occurred:", e)
         return None
 
-@st.cache_data(ttl='1d',max_entries=1)
+@st.cache_data(ttl='6h',max_entries=1)
 def most_litres(df, name_col, qty_col):
     grouped_data = df.groupby(name_col)[qty_col].sum()
     highest_category = grouped_data.idxmax()
     highest_sum = np.round(grouped_data.max()/1000, 2)
     return highest_category, highest_sum
 
+@st.cache_data(ttl='6h',max_entries=1)
+def update(_gc):
+    with requests.Session() as session:
+        general_response = session.get(general_endpoint).json()
+
+    events = pd.DataFrame(general_response['events'])[['id', 'is_previous', 'is_current', 'is_next', 'finished', 'data_checked',]]
+    if len(events[events['is_current'] == True]) == 0:
+        print('season hasn\'t started pull placeholder data')
+        events = pd.DataFrame(placeholder_events)[['id', 'is_previous', 'is_current', 'is_next', 'finished', 'data_checked',]]
+
+    
+    gw = int(events[events["is_current"] == True]["id"])
+    finished = bool(events[events["is_current"] == True]["finished"].values)
+    data_checked = bool(events[events["is_current"] == True]["data_checked"].values)
+    
+    if finished and data_checked:
+        print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
+        max_stored_gw = fetch_max_gw(_gc, gameweek_results_table, google_sheet_key)
+        if max_stored_gw < gw:      
+            print('max stored_gw < current week')
+            print('we will update here')
+            return True
+        
+        else: 
+            print('data is already latest - pull from gs')
+            return False
+    else:
+        print("its either a new week or the old week hasnt completetly finished - pull from gs")
+        print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
+        return False
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
 
 
