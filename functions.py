@@ -27,7 +27,7 @@ def connect_to_gs(_service_account_key):
 
 
 # function to fetch gw data from google sheets
-@st.cache_data(ttl='6h',max_entries = 1,)
+@st.cache_data(max_entries = 1,)
 def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -106,7 +106,7 @@ def build_drinks_display(drinks, current_week):
 
 
 # function to fetch managers from google sheets
-@st.cache_data(ttl='6h', max_entries = 1,)
+@st.cache_data(max_entries = 1,)
 def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -168,7 +168,7 @@ def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to return season metrics
-@st.cache_data(ttl='6h', max_entries = 1,)
+@st.cache_data(max_entries = 1,)
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -240,8 +240,7 @@ def create_metrics(df):
     )
 
 
-@st.cache_data(ttl='6h',max_entries=1)
-#checks the latest data to see if it needs to be refreshed
+@st.cache_data(max_entries = 1,)
 def fetch_max_gw(_gc, sheet_name, sheet_key):
     try:
         # Open specific sheet
@@ -300,19 +299,46 @@ def update(_gc):
         if max_stored_gw < gw:      
             print('max stored_gw < current week')
             print('we will update here')
-            return True
+            return True, gw
         
         else: 
             print('data is already latest - pull from gs')
-            return False
+            return False, max_stored_gw
     else:
         print("its either a new week or the old week hasnt completetly finished - pull from gs")
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
-        return False
+        return False, gw
+    
+
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
+def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
+    try:
+        # Open specific sheet
+        gs = gc.open_by_key(sheet_key)
 
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
 
-# function to write data to google sheets
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
+
+        for column in columns_list:
+            df[column] = pd.to_numeric(df[column])
+
+        return df
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print("Error: Worksheet not found:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+    
+
 def write_google_sheets_data(_gc, df, sheet_name, sheet_key):
     try:
         # Open specific sheet
@@ -336,14 +362,11 @@ def write_google_sheets_data(_gc, df, sheet_name, sheet_key):
         print("An error occurred:", e)
         return None
 
-
-# function to validate select box choices
 def select_box_validator(input):
     if input == "":
         return False
     else:
         return True
-
 
 def submit_drink(_gc, df, sheet_key, nominee, drink_size):
     try:
@@ -379,7 +402,6 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
         print("An error occurred:", e)
         return None
 
-
 def categories(df):
     df["quantity"] = 1
     df = df.iloc[:, [2, 5, 6, 7]]
@@ -397,7 +419,6 @@ def categories(df):
     df.loc[condition3, "Category"] = "Outstanding"
 
     return df
-
 
 def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
     try:
@@ -468,16 +489,13 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
 
     return None
 
-
-
 def build_rank_df(gameweek_df, current_week):
-    last_10 = gameweek_df[gameweek_df.event >= current_week - 10].iloc[:, [0, 2, 4]]
+    last_10 = gameweek_df[gameweek_df.event >= current_week - 10][["event", "player_name", "total_points"]]
     # last_10 = gameweek_df[gameweek_df.event<=10].iloc[:,[0,2,4]]
     last_10["rank"] = (
         last_10.groupby(["event"])["total_points"].rank(ascending=False).astype(int)
     )
     return last_10
-
 
 def build_laps(df):
     # Filter rows with relevant columns and non-null values
@@ -509,3 +527,221 @@ def build_laps(df):
     )
     return display_times
 
+def fetch_max_gw_helper(_gc, sheet_name, sheet_key):
+    try:
+        # Open specific sheet
+        gs = _gc.open_by_key(sheet_key)
+
+        # Open specific tab within the sheet
+        tab = gs.worksheet(sheet_name)
+
+        data = tab.get_all_values()
+        headers = data.pop(0)
+        df = pd.DataFrame(data, columns=headers)
+
+        # Convert the first column to numeric
+        df[headers[0]] = pd.to_numeric(df[headers[0]])
+
+        # Get the maximum value of the first column
+        max_value = df[headers[0]].max()
+
+        return int(max_value)
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+        return None
+    except gspread.exceptions.WorksheetNotFound as e:
+        print("Error: Worksheet not found:", e)
+        return None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None
+
+def append_missing_rows(df1, df2, current_gw):
+    t1, t2 = df1[["entry", "player_name"]], df2 [["entry", "player_name"]]
+    missing_rows = t2[~t2['entry'].isin(t1['entry'])]
+    missing_rows["event_joined"] = current_gw
+    missing_rows["uno_reverse"] = "Yes"
+    missing_rows
+    return missing_rows
+
+def managers_update(_gc, league_endpoint, current_gw):
+    with requests.Session() as session:
+        league_response = session.get(league_endpoint).json()
+    
+    df2 = pd.DataFrame(league_endpoint["standings"]["results"])
+    df1 = fetch_manager_data(_gc, managers_table, google_sheet_key, ['entry', 'event_joined'])
+    m = append_missing_rows(df1, df2, current_gw)
+    write_google_sheets_data(_gc, m, managers_table, google_sheet_key)
+    return df1[["entry", "player_name"]]
+
+# def gameweek_results_update(_gc, current_gw, manager_details):
+#     new_gameweek_results = pd.DataFrame()
+
+#     for entry, player_name in zip(manager_details['entry'], manager_details['player_name']):
+#         entry_endpoint = f'https://fantasy.premierleague.com/api/entry/{entry}/history/'
+#         with requests.Session() as session:
+#             entry_response = session.get(entry_endpoint).json()
+
+#         current_events = entry_response['current'] #<- unhash and remove json_response argument
+
+#         # current_events = json_response['current']
+        
+#         for event_data in current_events:
+#             if event_data['event'] == current_gw:
+#                 new_player_row = {
+#                     'event': current_gw,
+#                     'entry': entry,
+#                     'player_name': player_name,
+#                     'points': event_data['points'],
+#                     'total_points': event_data['total_points'],
+#                     'event_transfers': event_data['event_transfers'],
+#                     'points_on_bench': event_data['points_on_bench']}
+
+#                 new_gameweek_results = new_gameweek_results.append(new_player_row, ignore_index=True)
+#     write_google_sheets_data(_gc, new_gameweek_results, gameweek_results_table, google_sheet_key)
+
+#     # Find player_name with lowest points for auto update drinks
+#     lowest_points_player = new_gameweek_results.loc[new_gameweek_results['points'].idxmin()]['player_name']
+    
+#     return lowest_points_player
+
+def get_player_stats(player_id, live_gw_data):
+    for element in live_gw_data["elements"]:
+        if element["id"] == player_id:
+            return element["stats"]
+    return None
+
+def analyze_picks(picks, live_gw_data):
+    red_card = 0
+    own_goal = 0
+    penalties_missed = 0
+
+    for player_id in picks:
+        player_stats = get_player_stats(player_id, live_gw_data)
+        if player_stats:
+            red_card += player_stats["red_cards"]
+            own_goal += player_stats["own_goals"]
+            penalties_missed += player_stats["penalties_missed"]
+
+    return red_card > 0, own_goal > 0, penalties_missed > 0
+
+
+def gameweek_results_update(_gc, current_gw, manager_details):
+    new_gameweek_results = pd.DataFrame()
+    picks_data = pd.DataFrame()
+
+    for entry, player_name in zip(manager_details['entry'], manager_details['player_name']):
+        live_teams_endpoint = f'https://fantasy.premierleague.com/api/entry/{entry}/event/{current_gw}/picks/'
+        with requests.Session() as session:
+            live_teams_response = session.get(live_teams_endpoint).json()
+
+        live_teams = live_teams_response['entry_history']
+
+        # Create new player row
+        new_player_row = {
+            'event': current_gw,
+            'entry': entry,
+            'player_name': player_name,
+            'points': live_teams['points'],
+            'total_points': live_teams['total_points'],
+            'event_transfers': live_teams['event_transfers'],
+            'points_on_bench': live_teams['points_on_bench']}
+        
+        # Append to new_gameweek_results using concat
+        new_gameweek_results = pd.concat([new_gameweek_results, pd.DataFrame([new_player_row])], ignore_index=True)
+
+        # Get player picks
+        elements_out = [sub["element_out"] for sub in live_teams_response["automatic_subs"]]
+        elements_in = [sub["element_in"] for sub in live_teams_response["automatic_subs"]]
+        picks = live_teams_response["picks"]
+
+        element_ids_modified = [pick["element"] for pick in picks if pick["element"] not in elements_out]
+        element_ids_modified.extend(elements_in)
+
+        live_gameweek_endpoint = f'https://fantasy.premierleague.com/api/event/{current_gw}/live/'
+        with requests.Session() as session:
+            live_gameweek_response = session.get(live_gameweek_endpoint).json()
+
+        # Analyze player picks
+        red_card_flag, own_goal_flag, penalties_missed_flag = analyze_picks(element_ids_modified, live_gameweek_response)
+
+        new_picks_data = {
+            'event': current_gw,
+            'entry': entry,
+            'player_name': player_name,
+            'picks': str(element_ids_modified),
+            'red_card': red_card_flag,
+            'own_goal': own_goal_flag,
+            'missed_pen': penalties_missed_flag
+        }
+
+        # Append to picks_data using concat
+        picks_data = pd.concat([picks_data, pd.DataFrame([new_picks_data])], ignore_index=True)
+
+    # Update google sheets for new_gameweek_results and picks_data
+    write_google_sheets_data(_gc, new_gameweek_results, gameweek_results_table, google_sheet_key)
+    write_google_sheets_data(_gc, picks_data, gameweek_teams_table, google_sheet_key)
+    
+    return None
+
+
+# Function to filter player names based on conditions
+def get_players_by_condition(df, condition_column):
+    filtered_players = df[df[condition_column] == 'TRUE']
+    return list(filtered_players['player_name'])
+
+
+def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, google_sheet_key, current_gw):
+    gameweek_results_table_df = fetch_google_sheets_data(_gc, gameweek_results_table, google_sheet_key,  ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"])
+    gameweek_teams_table_df = fetch_google_sheets_data(_gc, gameweek_teams_table, google_sheet_key,  ["event"])
+
+    filtered_results = gameweek_results_table_df[gameweek_results_table_df["event"] == current_gw]
+    filtered_teams = gameweek_teams_table_df[gameweek_teams_table_df["event"] == current_gw]
+
+    lowest_points_player = filtered_results.sort_values(by=['points', 'total_points', 'player_name']).iloc[0]['player_name']
+    created_date = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M:%S")
+    deadline_date = (datetime.now() + timedelta(hours=2) + timedelta(days=7)).strftime("%d/%m/%y %H:00")
+
+    # Get player names with red cards, own goals, and missed penalties
+    red_card_players = get_players_by_condition(filtered_teams, 'red_card')
+    own_goal_players = get_players_by_condition(filtered_teams, 'own_goal')
+    missed_pen_players = get_players_by_condition(filtered_teams, 'missed_pen')
+
+    red_card_drinks_data = {
+        "event": [current_gw]*len(red_card_players),
+        "nominator_name": ["auto"]*len(red_card_players),
+        "drinker_name": red_card_players,
+        "drink_type": ["red card"]*len(red_card_players),
+        "nomination_created_date": [created_date]*len(red_card_players),
+        "nomination_deadline_date": [deadline_date]*len(red_card_players),
+        "nomination_completed_date": ["Not Completed"]*len(red_card_players),
+    }
+
+    own_goal_players_drinks_data = {
+        "event": [current_gw]*len(own_goal_players),
+        "nominator_name": ["auto"]*len(own_goal_players),
+        "drinker_name": own_goal_players,
+        "drink_type": ["own goal"]*len(own_goal_players),
+        "nomination_created_date": [created_date]*len(own_goal_players),
+        "nomination_deadline_date": [deadline_date]*len(own_goal_players),
+        "nomination_completed_date": ["Not Completed"]*len(own_goal_players),
+    }
+
+    missed_pen_players_drinks_data = {
+        "event": [current_gw]*len(missed_pen_players),
+        "nominator_name": ["auto"]*len(missed_pen_players),
+        "drinker_name": missed_pen_players,
+        "drink_type": ["missed pen"]*len(missed_pen_players),
+        "nomination_created_date": [created_date]*len(missed_pen_players),
+        "nomination_deadline_date": [deadline_date]*len(missed_pen_players),
+        "nomination_completed_date": ["Not Completed"]*len(missed_pen_players),
+    }
+
+    df1 = pd.DataFrame(red_card_drinks_data)
+    df2 = pd.DataFrame(own_goal_players_drinks_data)
+    df3 = pd.DataFrame(missed_pen_players_drinks_data)
+
+    concatenated_df = pd.concat([df1, df2, df3], ignore_index=True)
+
+    write_google_sheets_data(_gc, concatenated_df, drinks_table, google_sheet_key)

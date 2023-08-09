@@ -21,28 +21,21 @@ gs_connection = connect_to_gs(st.secrets["gcp_service_account"])
 
 
 #the result of the update function is cached for 6 hours 
-if update(gs_connection) == True:
+update_flag, current_gw = update(gs_connection)
+
+if update_flag == True:
     print('There is new data, google sheets will be updated now')
-    # gameweek_results_update()
-    # auto_drinks_update(current_week, last)
-    # managers_update()
-
-    # cached_variables.clear()
-    # first_place, last_place, redcards, own_goals, negative_points, current_week = cached_variables(first_place, last_place, redcards, own_goals, negative_points, current_week)
-else:
-    print('Data in google sheets is up to date')
-    #create placeholders
-    first_place = 'Connor McDonald'
-    last_place = 'Alex Wietzorrek'
-    red_cards = []
-    own_goals = []
-    negative_points = []
+    #update functions
+    manager_details = managers_update(gs_connection, league_endpoint, current_gw)
+    gameweek_results_update(gs_connection, current_gw, manager_details)
+    auto_assign_drinks(gs_connection, gameweek_results_table, gameweek_teams_table, google_sheet_key, current_gw)
+    st.cache_data.clear()         #<--- makes sure functions below are rerun 
 
 
-#cached for 
+#make this cache indefintely and reset on update
 current_week = fetch_max_gw(gs_connection, gameweek_results_table, google_sheet_key)
 
-
+#make this cache indefintely and reset on update
 gameweek_df = fetch_gameweek_data(
         gs_connection,
         gameweek_results_table,
@@ -50,20 +43,34 @@ gameweek_df = fetch_gameweek_data(
         ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"],)
     
 
+#make this cache indefintely and reset on update
+managers = sorted(fetch_manager_data(gs_connection, managers_table, google_sheet_key, [])["player_name"])
+managers.insert(0, "")
+
+##################################### write function for this, make this cache indefintely and reset on update
+#get_illegible_nominees()   <--- last, og, red, np
+first_place = 'Connor McDonald'
+last_place = 'Alex Wietzorrek'
+red_cards = []
+own_goals = []
+negative_points = []
+#####################################
+
+
+#this has a cache reset every 6 hours because people can nominate or uno reverse and the change should be reflected
 drinks = fetch_drinks_data(gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
 drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
 
-managers = sorted(fetch_manager_data(gs_connection, managers_table, google_sheet_key, [])["player_name"])
-managers.insert(0, "")
-
+#this has a cache reset every 6 hours because it can change during the week
 uno_data = fetch_uno_data(gs_connection, managers_table, google_sheet_key, [])
 uno_data_display = uno_data.iloc[:, [1, 3]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
 uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
 uno_data_display.index = np.arange(1, len(uno_data) + 1)
 
-
+#make these cache indefintely and reset on update since they wont change during the week
+#get_illegible_nominees()   <--- last, og, red, np
 (
     most_1st_place_player,
     most_1st_place_count,
@@ -78,6 +85,7 @@ uno_data_display.index = np.arange(1, len(uno_data) + 1)
     lowest_score_points,
 ) = create_metrics(gameweek_df)
 
+#this can change if someone submits so it should have a cache of 6 hours
 most_litres_name, most_litres_qty = most_litres(drinks,"drinker_name", 'drink_size')
 
 
@@ -369,14 +377,13 @@ with awards_tab:
         help=f"{lowest_score_player_name} had the worst game week of the season ({lowest_score_points} points in game week {lowest_score_event})",
     )
 
-
 with rules_tab:
     st.markdown(
         """
                 ## Rules of the game
                 1. First place for each week can nominate one person of their choice or randomly nominate three people (with the chance of picking themselves).
                 2. Last place for each week will be assigned a drink.
-                3. If you have a player with a red card, own goal, or negative points in your :red[**final 11**], you will be assigned a drink
+                3. If you have a player with a red card, own goal, or missed penalty in your :red[**final 11**], you will be assigned a drink.
                 4. If you want to be included on the lap times leaderboard you will need to have a stop watch visibile in your video submission.
                 5. Everyone gets one Uno reverse card per season. You can use this to give your drink back to the person that nominated you. As long as you do it within 2 days of nomination.
                 6. You can't Uno reverse someone else's Uno reverse.    

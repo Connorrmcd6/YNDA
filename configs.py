@@ -8,6 +8,7 @@ fixture_endpoint = "https://fantasy.premierleague.com/api/fixtures/"
 
 # sheet names
 gameweek_results_table = "gameweek_results"
+gameweek_teams_table = "gameweek_teams"
 managers_table = "managers"
 drinks_table = "drinks"
 
