@@ -10,7 +10,6 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import matplotlib.pyplot as plt
 import altair as alt
-from placeholder_events import *
 import requests
 from configs import *
 
@@ -286,8 +285,8 @@ def update(_gc):
     events = pd.DataFrame(general_response['events'])[['id', 'is_previous', 'is_current', 'is_next', 'finished', 'data_checked',]]
     if len(events[events['is_current'] == True]) == 0:
         print('season hasn\'t started pull placeholder data')
-        events = pd.DataFrame(placeholder_events)[['id', 'is_previous', 'is_current', 'is_next', 'finished', 'data_checked',]]
-
+        gw = 1
+        return False, gw
     
     gw = int(events[events["is_current"] == True]["id"])
     finished = bool(events[events["is_current"] == True]["finished"].values)
@@ -309,6 +308,29 @@ def update(_gc):
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
         return False, gw
     
+
+
+@st.cache_data(max_entries = 1,)
+def get_illegible_nominees(df, current_gw):
+    red_card_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'red card')]['drinker_name'].tolist()
+    own_goal_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'own goal')]['drinker_name'].tolist()
+    missed_pen_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'missed pen')]['drinker_name'].tolist()
+    return red_card_players, own_goal_players, missed_pen_players
+
+@st.cache_data(max_entries = 1,)
+def get_first_last(df, current_gw):
+    # Filter the DataFrame for the given current_gw
+    current_gw_df = df[df['event'] == current_gw]
+
+    # Sort the filtered DataFrame based on points, total_points, and player_name
+    sorted_df = current_gw_df.sort_values(by=["points", "total_points", "player_name"],
+                                           ascending=[False, False, True])
+
+    # Get the player names of the first and last place
+    first_place_name = sorted_df['player_name'].iloc[0]
+    last_place_name = sorted_df['player_name'].iloc[-1]
+
+    return first_place_name, last_place_name
 
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
 def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
@@ -426,6 +448,7 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
         filtered_drinks = drinks[
             (drinks["drinker_name"] == nominee)
             & (drinks["nomination_completed_date"] == "Not Completed")
+            & (drinks["drink_type"] == "nomination")
         ]
         
         if filtered_drinks.empty:
@@ -575,37 +598,6 @@ def managers_update(_gc, league_endpoint, current_gw):
     write_google_sheets_data(_gc, m, managers_table, google_sheet_key)
     return df1[["entry", "player_name"]]
 
-# def gameweek_results_update(_gc, current_gw, manager_details):
-#     new_gameweek_results = pd.DataFrame()
-
-#     for entry, player_name in zip(manager_details['entry'], manager_details['player_name']):
-#         entry_endpoint = f'https://fantasy.premierleague.com/api/entry/{entry}/history/'
-#         with requests.Session() as session:
-#             entry_response = session.get(entry_endpoint).json()
-
-#         current_events = entry_response['current'] #<- unhash and remove json_response argument
-
-#         # current_events = json_response['current']
-        
-#         for event_data in current_events:
-#             if event_data['event'] == current_gw:
-#                 new_player_row = {
-#                     'event': current_gw,
-#                     'entry': entry,
-#                     'player_name': player_name,
-#                     'points': event_data['points'],
-#                     'total_points': event_data['total_points'],
-#                     'event_transfers': event_data['event_transfers'],
-#                     'points_on_bench': event_data['points_on_bench']}
-
-#                 new_gameweek_results = new_gameweek_results.append(new_player_row, ignore_index=True)
-#     write_google_sheets_data(_gc, new_gameweek_results, gameweek_results_table, google_sheet_key)
-
-#     # Find player_name with lowest points for auto update drinks
-#     lowest_points_player = new_gameweek_results.loc[new_gameweek_results['points'].idxmin()]['player_name']
-    
-#     return lowest_points_player
-
 def get_player_stats(player_id, live_gw_data):
     for element in live_gw_data["elements"]:
         if element["id"] == player_id:
@@ -745,3 +737,5 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, google
     concatenated_df = pd.concat([df1, df2, df3], ignore_index=True)
 
     write_google_sheets_data(_gc, concatenated_df, drinks_table, google_sheet_key)
+
+

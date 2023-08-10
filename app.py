@@ -47,21 +47,20 @@ gameweek_df = fetch_gameweek_data(
 managers = sorted(fetch_manager_data(gs_connection, managers_table, google_sheet_key, [])["player_name"])
 managers.insert(0, "")
 
-##################################### write function for this, make this cache indefintely and reset on update
-#get_illegible_nominees()   <--- last, og, red, np
-first_place = 'Connor McDonald'
-last_place = 'Alex Wietzorrek'
-red_cards = []
-own_goals = []
-negative_points = []
-#####################################
-
 
 #this has a cache reset every 6 hours because people can nominate or uno reverse and the change should be reflected
 drinks = fetch_drinks_data(gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
 drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
+
+##################################### write function for this, make this cache indefintely and reset on update
+#get_illegible_nominees()   <--- last, og, red, np
+# first_place = 'Connor McDonald'
+# last_place = 'Alex Wietzorrek'
+first_place, last_place = get_first_last(gameweek_df, current_gw)
+red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
+#####################################
 
 #this has a cache reset every 6 hours because it can change during the week
 uno_data = fetch_uno_data(gs_connection, managers_table, google_sheet_key, [])
@@ -118,7 +117,7 @@ with st.sidebar:
             elif nominee in own_goals:
                 st.error("This person got an own goal, pick someone else")
 
-            elif nominee in negative_points:
+            elif nominee in missed_pen:
                 st.error("This person got negative points, pick someone else")
 
             elif nominee == last_place:
@@ -174,9 +173,9 @@ with st.sidebar:
                     if len(own_goals) > 0:
                         managers_temp = [i for i in managers_temp if i not in own_goals]
 
-                    if len(negative_points) > 0:
+                    if len(missed_pen) > 0:
                         managers_temp = [
-                            i for i in managers_temp if i not in negative_points
+                            i for i in managers_temp if i not in missed_pen
                         ]
 
                     random_nominees = sample(managers_temp, 3)
