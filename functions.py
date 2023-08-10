@@ -537,7 +537,7 @@ def build_laps(df):
     # Compute the gap from the fastest time
     fastest_time = drinks_lap_times['completion_time'].min()
     drinks_lap_times['gap'] = drinks_lap_times['completion_time'] - fastest_time
-    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}" if pd.notna(x) and x != 0 else '')
+    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
 
     # Select and format the relevant columns
     display_times = drinks_lap_times[[ 'drinker_name', 'completion_time', 'gap']]
