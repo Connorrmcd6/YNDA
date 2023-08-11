@@ -93,9 +93,9 @@ with st.sidebar:
     # capture week of nomination from backend
     st.header("🎖️ Nominations")
 
-    nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name", placeholder="Select...")
+    nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name")
 
-    nominee = st.selectbox("Nominate", managers, placeholder="Select...")
+    nominee = st.selectbox("Nominate", managers)
 
     if st.button(label="Submit", key="nominate_submit"):
         if "nominate" not in st.session_state:
