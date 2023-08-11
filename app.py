@@ -54,13 +54,8 @@ drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
 
-##################################### write function for this, make this cache indefintely and reset on update
-#get_illegible_nominees()   <--- last, og, red, np
-# first_place = 'Connor McDonald'
-# last_place = 'Alex Wietzorrek'
 first_place, last_place = get_first_last(gameweek_df, current_gw)
 red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
-#####################################
 
 #this has a cache reset every 6 hours because it can change during the week
 uno_data = fetch_uno_data(gs_connection, managers_table, prod_google_sheet_key, [])
@@ -68,8 +63,6 @@ uno_data_display = uno_data.iloc[:, [1, 3]].sort_values(["uno_reverse", "player_
 uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
 uno_data_display.index = np.arange(1, len(uno_data) + 1)
 
-#make these cache indefintely and reset on update since they wont change during the week
-#get_illegible_nominees()   <--- last, og, red, np
 (
     most_1st_place_player,
     most_1st_place_count,
@@ -87,7 +80,7 @@ uno_data_display.index = np.arange(1, len(uno_data) + 1)
 #this can change if someone submits so it should have a cache of 6 hours
 most_litres_name, most_litres_qty = most_litres(drinks,"drinker_name", 'drink_size')
 
-
+nominate_flag = can_nominate_flag(drinks, current_gw, first_place)
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 with st.sidebar:
     # capture week of nomination from backend
@@ -98,7 +91,7 @@ with st.sidebar:
     nominee = st.selectbox("Nominate", managers)
 
     if st.button(label="Submit", key="nominate_submit"):
-        if "nominate" not in st.session_state:
+        if nominate_flag == True:
             if not select_box_validator(nominator):
                 st.error("Please fill in your name")
 
@@ -146,15 +139,14 @@ with st.sidebar:
                     write_google_sheets_data(
                         gs_connection, df, drinks_table, prod_google_sheet_key
                     )
-                    st.session_state.nominate = True
                     st.success("Nomination Submitted")
         else:
-            st.error("You have already nominated")
+            st.error("You have already nominated this week")
 
     st.header("OR")
 
     if st.button(f"Randomly pick {random_choice_amount}"):
-        if "nominate" not in st.session_state:
+        if nominate_flag == True:
             if not select_box_validator(nominator):
                 st.error("Please fill in your name")
             elif nominator != first_place:
@@ -205,17 +197,13 @@ with st.sidebar:
                         gs_connection, df, drinks_table, prod_google_sheet_key
                     )
 
-                    st.session_state.nominate = True
 
                     for i in range(random_choice_amount):
                         st.text(f"{i}.{random_nominees[i]}")
 
-                    # st.text(f"1.{random_nominees[0]}")
-                    # st.text(f"2.{random_nominees[1]}")
-                    # st.text(f"3.{random_nominees[2]}")
                     st.success("Nomination Submitted")
         else:
-            st.error("You have already nominated")
+            st.error("You have already nominated this week")
 
     st.divider()
 
