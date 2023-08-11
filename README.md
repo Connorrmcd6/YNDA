@@ -1,5 +1,3 @@
-# YNDA
-
 ## You'll Never Drink Alone - Fantasy Premier League Drinking Game
 
 The app pulls data from the [Fantasy Premier League Api](https://buildmedia.readthedocs.org/media/pdf/fpl/latest/fpl.pdf) to game-ify the mini league experience.
