@@ -93,9 +93,9 @@ with st.sidebar:
     # capture week of nomination from backend
     st.header("🎖️ Nominations")
 
-    nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name")
+    nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name", placeholder="Select...")
 
-    nominee = st.selectbox("Nominate", managers)
+    nominee = st.selectbox("Nominate", managers, placeholder="Select...")
 
     if st.button(label="Submit", key="nominate_submit"):
         if "nominate" not in st.session_state:
@@ -270,6 +270,8 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 with drinks_tab:
     st.header("Latest Drinks",
               help='Drinks for the last 2 game weeks')
+    if current_gw > 0:
+        st.write(f"Gameweek {current_gw} winner: {first_place}")
     st.table(drinks_display)
 
     st.header("Uno Reverse Cards",
