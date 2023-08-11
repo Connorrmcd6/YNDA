@@ -294,7 +294,7 @@ def update(_gc):
     
     if finished and data_checked:
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
-        max_stored_gw = fetch_max_gw(_gc, gameweek_results_table, google_sheet_key)
+        max_stored_gw = fetch_max_gw(_gc, gameweek_results_table, prod_google_sheet_key)
         if max_stored_gw < gw:      
             print('max stored_gw < current week')
             print('we will update here')
@@ -593,9 +593,9 @@ def managers_update(_gc, league_endpoint, current_gw):
         league_response = session.get(league_endpoint).json()
     
     df2 = pd.DataFrame(league_endpoint["standings"]["results"])
-    df1 = fetch_manager_data(_gc, managers_table, google_sheet_key, ['entry', 'event_joined'])
+    df1 = fetch_manager_data(_gc, managers_table, prod_google_sheet_key, ['entry', 'event_joined'])
     m = append_missing_rows(df1, df2, current_gw)
-    write_google_sheets_data(_gc, m, managers_table, google_sheet_key)
+    write_google_sheets_data(_gc, m, managers_table, prod_google_sheet_key)
     return df1[["entry", "player_name"]]
 
 def get_player_stats(player_id, live_gw_data):
@@ -672,8 +672,8 @@ def gameweek_results_update(_gc, current_gw, manager_details):
         picks_data = pd.concat([picks_data, pd.DataFrame([new_picks_data])], ignore_index=True)
 
     # Update google sheets for new_gameweek_results and picks_data
-    write_google_sheets_data(_gc, new_gameweek_results, gameweek_results_table, google_sheet_key)
-    write_google_sheets_data(_gc, picks_data, gameweek_teams_table, google_sheet_key)
+    write_google_sheets_data(_gc, new_gameweek_results, gameweek_results_table, prod_google_sheet_key)
+    write_google_sheets_data(_gc, picks_data, gameweek_teams_table, prod_google_sheet_key)
     
     return None
 
@@ -684,9 +684,9 @@ def get_players_by_condition(df, condition_column):
     return list(filtered_players['player_name'])
 
 
-def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, google_sheet_key, current_gw):
-    gameweek_results_table_df = fetch_google_sheets_data(_gc, gameweek_results_table, google_sheet_key,  ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"])
-    gameweek_teams_table_df = fetch_google_sheets_data(_gc, gameweek_teams_table, google_sheet_key,  ["event"])
+def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_google_sheet_key, current_gw):
+    gameweek_results_table_df = fetch_google_sheets_data(_gc, gameweek_results_table, prod_google_sheet_key,  ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"])
+    gameweek_teams_table_df = fetch_google_sheets_data(_gc, gameweek_teams_table, prod_google_sheet_key,  ["event"])
 
     filtered_results = gameweek_results_table_df[gameweek_results_table_df["event"] == current_gw]
     filtered_teams = gameweek_teams_table_df[gameweek_teams_table_df["event"] == current_gw]
@@ -736,6 +736,6 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, google
 
     concatenated_df = pd.concat([df1, df2, df3], ignore_index=True)
 
-    write_google_sheets_data(_gc, concatenated_df, drinks_table, google_sheet_key)
+    write_google_sheets_data(_gc, concatenated_df, drinks_table, prod_google_sheet_key)
 
 

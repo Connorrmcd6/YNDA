@@ -13,4 +13,5 @@ managers_table = "managers"
 drinks_table = "drinks"
 
 # sheet_key
-google_sheet_key = "15guH9poFUzNztNV9q4nI1yvY9NbR9CkJebSk2R7aWoU"
+prod_google_sheet_key = "15guH9poFUzNztNV9q4nI1yvY9NbR9CkJebSk2R7aWoU"
+dev_google_sheet_key = "1xpiEu-vnCkVY7qh9qMV7-KLTReqZEsu5r9xp99gk-I0"

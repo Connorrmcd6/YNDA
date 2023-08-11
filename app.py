@@ -28,28 +28,28 @@ if update_flag == True:
     #update functions
     manager_details = managers_update(gs_connection, league_endpoint, current_gw)
     gameweek_results_update(gs_connection, current_gw, manager_details)
-    auto_assign_drinks(gs_connection, gameweek_results_table, gameweek_teams_table, google_sheet_key, current_gw)
+    auto_assign_drinks(gs_connection, gameweek_results_table, gameweek_teams_table, prod_google_sheet_key, current_gw)
     st.cache_data.clear()         #<--- makes sure functions below are rerun 
 
 
 #make this cache indefintely and reset on update
-current_week = fetch_max_gw(gs_connection, gameweek_results_table, google_sheet_key)
+current_week = fetch_max_gw(gs_connection, gameweek_results_table, prod_google_sheet_key)
 
 #make this cache indefintely and reset on update
 gameweek_df = fetch_gameweek_data(
         gs_connection,
         gameweek_results_table,
-        google_sheet_key,
+        prod_google_sheet_key,
         ["event", "points", "total_points", "event_transfers_cost", "points_on_bench"],)
     
 
 #make this cache indefintely and reset on update
-managers = sorted(fetch_manager_data(gs_connection, managers_table, google_sheet_key, [])["player_name"])
+managers = sorted(fetch_manager_data(gs_connection, managers_table, prod_google_sheet_key, [])["player_name"])
 managers.insert(0, "")
 
 
 #this has a cache reset every 6 hours because people can nominate or uno reverse and the change should be reflected
-drinks = fetch_drinks_data(gs_connection, drinks_table, google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
+drinks = fetch_drinks_data(gs_connection, drinks_table, prod_google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
 drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
 
@@ -63,7 +63,7 @@ red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
 #####################################
 
 #this has a cache reset every 6 hours because it can change during the week
-uno_data = fetch_uno_data(gs_connection, managers_table, google_sheet_key, [])
+uno_data = fetch_uno_data(gs_connection, managers_table, prod_google_sheet_key, [])
 uno_data_display = uno_data.iloc[:, [1, 3]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
 uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
 uno_data_display.index = np.arange(1, len(uno_data) + 1)
@@ -144,7 +144,7 @@ with st.sidebar:
 
                     df = pd.DataFrame(data)
                     write_google_sheets_data(
-                        gs_connection, df, drinks_table, google_sheet_key
+                        gs_connection, df, drinks_table, prod_google_sheet_key
                     )
                     st.session_state.nominate = True
                     st.success("Nomination Submitted")
@@ -202,7 +202,7 @@ with st.sidebar:
                 
                     df = pd.DataFrame(data)
                     write_google_sheets_data(
-                        gs_connection, df, drinks_table, google_sheet_key
+                        gs_connection, df, drinks_table, prod_google_sheet_key
                     )
 
                     st.session_state.nominate = True
@@ -234,7 +234,7 @@ with st.sidebar:
                     r = submit_drink(
                         gs_connection,
                         drinks,
-                        google_sheet_key,
+                        prod_google_sheet_key,
                         drink_submitter,
                         drink_size,
                     )
@@ -253,7 +253,7 @@ with st.sidebar:
                             gs_connection,
                             drinks,
                             uno_data,
-                            google_sheet_key,
+                            prod_google_sheet_key,
                             drink_submitter,
                         )
                         if r == None:
