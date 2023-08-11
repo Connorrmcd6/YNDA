@@ -739,3 +739,5 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
     write_google_sheets_data(_gc, concatenated_df, drinks_table, prod_google_sheet_key)
 
 
+def can_nominate_flag(df, current_gw, first_place):
+    return len(df[(df["event"] == current_gw) & (df["nominator_name"] == first_place)]) == 0
