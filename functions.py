@@ -306,7 +306,7 @@ def update(_gc):
     else:
         print("its either a new week or the old week hasnt completetly finished - pull from gs")
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
-        return False, gw
+        return False, gw, finished, data_checked
     
 
 
@@ -322,13 +322,16 @@ def get_first_last(df, current_gw):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw]
 
+    if len(current_gw_df) == 0:
+        return None, None  # gw not finished
+
     # Sort the filtered DataFrame based on points, total_points, and player_name
     sorted_df = current_gw_df.sort_values(by=["points", "total_points", "player_name"],
-                                           ascending=[False, False, True])
+                                          ascending=[False, False, True])
 
     # Get the player names of the first and last place
-    first_place_name = sorted_df['player_name'].iloc[0]
-    last_place_name = sorted_df['player_name'].iloc[-1]
+    first_place_name = sorted_df.iloc[0].player_name
+    last_place_name = sorted_df.iloc[-1].player_name
 
     return first_place_name, last_place_name
 

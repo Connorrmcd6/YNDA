@@ -21,7 +21,7 @@ gs_connection = connect_to_gs(st.secrets["gcp_service_account"])
 
 
 #the result of the update function is cached for 6 hours 
-update_flag, current_gw = update(gs_connection)
+update_flag, current_gw, finished, checked = update(gs_connection)
 
 if update_flag == True:
     print('There is new data, google sheets will be updated now')
@@ -261,8 +261,9 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 with drinks_tab:
     st.header("Latest Drinks",
               help='Drinks for the last 2 game weeks')
-    if current_gw > 0:
-        st.write(f"Gameweek {current_gw} winner: {first_place}")
+    if current_gw > 0 and finished and checked:
+        st.write(f"Game week {current_gw} Winner: {first_place}")
+
     st.table(drinks_display)
 
     st.header("Uno Reverse Cards",
