@@ -285,7 +285,7 @@ def update(_gc):
     events = pd.DataFrame(general_response['events'])[['id', 'is_previous', 'is_current', 'is_next', 'finished', 'data_checked',]]
     if len(events[events['is_current'] == True]) == 0:
         print('season hasn\'t started pull placeholder data')
-        gw = 1
+        gw = 0
         return False, gw
     
     gw = int(events[events["is_current"] == True]["id"])
