@@ -153,7 +153,7 @@ with st.sidebar:
 
     st.header("OR")
 
-    if st.button("Randomly pick 3"):
+    if st.button(f"Randomly pick {random_choice_amount}"):
         if "nominate" not in st.session_state:
             if not select_box_validator(nominator):
                 st.error("Please fill in your name")
@@ -178,7 +178,7 @@ with st.sidebar:
                             i for i in managers_temp if i not in missed_pen
                         ]
 
-                    random_nominees = sample(managers_temp, 3)
+                    random_nominees = sample(managers_temp, random_choice_amount)
                     created_date = (datetime.now() + timedelta(hours=2)).strftime(
                         "%d/%m/%y %H:%M:%S"
                     )
@@ -207,9 +207,12 @@ with st.sidebar:
 
                     st.session_state.nominate = True
 
-                    st.text(f"1.{random_nominees[0]}")
-                    st.text(f"2.{random_nominees[1]}")
-                    st.text(f"3.{random_nominees[2]}")
+                    for i in range(random_choice_amount):
+                        st.text(f"{i}.{random_nominees[i]}")
+
+                    # st.text(f"1.{random_nominees[0]}")
+                    # st.text(f"2.{random_nominees[1]}")
+                    # st.text(f"3.{random_nominees[2]}")
                     st.success("Nomination Submitted")
         else:
             st.error("You have already nominated")
