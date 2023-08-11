@@ -1,6 +1,7 @@
 ## You'll Never Drink Alone - Fantasy Premier League Drinking Game
 
 The app pulls data from the [Fantasy Premier League Api](https://buildmedia.readthedocs.org/media/pdf/fpl/latest/fpl.pdf) to game-ify the mini league experience.
+It use google sheets as a database and interacts with google drive using a service account
 
 ### Rules of the game
 
