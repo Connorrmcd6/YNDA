@@ -583,29 +583,52 @@ def fetch_max_gw_helper(_gc, sheet_name, sheet_key):
         print("An error occurred:", e)
         return None
 
-def append_missing_rows(df1, df2, current_gw):
-    t1, t2 = df1[["entry", "player_name"]], df2 [["entry", "player_name"]]
-    missing_rows = t2[~t2['entry'].isin(t1['entry'])]
-    missing_rows["event_joined"] = current_gw
-    missing_rows["uno_reverse"] = "Yes"
-    missing_rows
-    return missing_rows
-
-def managers_update(_gc, league_endpoint, current_gw):
-    with requests.Session() as session:
-        league_response = session.get(league_endpoint).json()
-    
-    df2 = pd.DataFrame(league_endpoint["standings"]["results"])
-    df1 = fetch_manager_data(_gc, managers_table, prod_google_sheet_key, ['entry', 'event_joined'])
-    m = append_missing_rows(df1, df2, current_gw)
-    write_google_sheets_data(_gc, m, managers_table, prod_google_sheet_key)
-    return df1[["entry", "player_name"]]
-
 def get_player_stats(player_id, live_gw_data):
     for element in live_gw_data["elements"]:
         if element["id"] == player_id:
             return element["stats"]
     return None
+
+
+def append_missing_rows(df1, df2, current_gw):
+    # Extract relevant columns
+    t1 = df1[["entry", "player_name"]]
+    t2 = df2[["entry", "player_name"]]
+    
+    # Find missing rows
+    missing_rows = t2[~t2['entry'].isin(t1['entry'])]
+    
+    if missing_rows.empty:
+        return None
+    
+    # Add new columns
+    missing_rows["event_joined"] = current_gw
+    missing_rows["uno_reverse"] = "Yes"
+    
+    return missing_rows
+
+
+def managers_update(_gc, league_endpoint, current_gw):
+    # Fetch league data using a session
+    with requests.Session() as session:
+        league_response = session.get(league_endpoint).json()
+
+    # Create DataFrame from league standings
+    league_data = league_response["standings"]["results"]
+    df2 = pd.DataFrame(league_data)
+
+    #convert columns to numerics
+    numerical_columns = ['entry', 'event_joined']
+    df1 = fetch_manager_data(_gc, managers_table, prod_google_sheet_key, numerical_columns)
+
+    # Append missing rows and handle the result
+    missing_rows = append_missing_rows(df1, df2, current_gw)
+    if missing_rows is None:
+        return df1[["entry", "player_name"]]
+
+    # Write missing rows to the Google Sheet
+    write_google_sheets_data(_gc, missing_rows, managers_table, prod_google_sheet_key)
+    return missing_rows[["entry", "player_name"]]
 
 def analyze_picks(picks, live_gw_data):
     red_card = 0
@@ -641,6 +664,7 @@ def gameweek_results_update(_gc, current_gw, manager_details):
             'points': live_teams['points'],
             'total_points': live_teams['total_points'],
             'event_transfers': live_teams['event_transfers'],
+            'event_transfers_cost': live_teams['event_transfers_cost'],
             'points_on_bench': live_teams['points_on_bench']}
         
         # Append to new_gameweek_results using concat
@@ -733,11 +757,22 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
         "nomination_completed_date": ["Not Completed"]*len(missed_pen_players),
     }
 
+    last_place_drinks_data = {
+        "event": [current_gw],
+        "nominator_name": ["auto"],
+        "drinker_name": lowest_points_player,
+        "drink_type": ["last place"],
+        "nomination_created_date": [created_date],
+        "nomination_deadline_date": [deadline_date],
+        "nomination_completed_date": ["Not Completed"],
+    }
+
     df1 = pd.DataFrame(red_card_drinks_data)
     df2 = pd.DataFrame(own_goal_players_drinks_data)
     df3 = pd.DataFrame(missed_pen_players_drinks_data)
+    df4 = pd.DataFrame(last_place_drinks_data)
 
-    concatenated_df = pd.concat([df1, df2, df3], ignore_index=True)
+    concatenated_df = pd.concat([df1, df2, df3, df4], ignore_index=True)
 
     write_google_sheets_data(_gc, concatenated_df, drinks_table, prod_google_sheet_key)
 
