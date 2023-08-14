@@ -1,6 +1,8 @@
 from functions import *
 from configs import *
 import time
+import streamlit as st
+import  streamlit_toggle as tog
 
 
 #'''------------------------------------------------------------PAGE CONFIGS------------------------------------------------------------'''
@@ -52,6 +54,9 @@ managers.insert(0, "")
 drinks = fetch_drinks_data(gs_connection, drinks_table, prod_google_sheet_key, ['event','drink_size', 'start_time', 'end_time'])
 drinks_display = build_drinks_display(drinks, current_week)
 drinks_display.index = np.arange(1, len(drinks_display) + 1)
+
+drinks_display_expanded = build_drinks_display_expanded(drinks)
+drinks_display_expanded.index = np.arange(1, len(drinks_display_expanded) + 1)
 
 
 first_place, last_place = get_first_last(gameweek_df, current_gw)
@@ -262,9 +267,21 @@ with drinks_tab:
     st.header("Latest Drinks",
               help='Drinks for the last 2 game weeks')
     if current_gw > 0 and finished and checked:
-        st.write(f"Game week {current_gw} Winner: {first_place}")
+        st.write(f"Latest winner: {first_place}")
 
-    st.table(drinks_display)
+    drinks_toggle = tog.st_toggle_switch(label=False, 
+                key="Key1", 
+                default_value=False, 
+                label_after = False, 
+                inactive_color = '#D3D3D3', 
+                active_color="#984249", 
+                track_color="#ff4c4b"
+                )
+
+    if drinks_toggle == True:
+        st.table(drinks_display_expanded)
+    else: 
+        st.table(drinks_display)
 
     st.header("Uno Reverse Cards",
               help='List of players and if they have used their uno reverse card or not')

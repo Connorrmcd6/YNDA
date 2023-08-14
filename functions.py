@@ -104,6 +104,23 @@ def build_drinks_display(drinks, current_week):
     return drinks_display
 
 
+@st.cache_data(ttl='6h', max_entries = 1,)
+def build_drinks_display_expanded(drinks):
+    drinks_display = drinks.iloc[:, [0, 2, 3, 5, 6]]
+    drinks_display.rename(
+        columns={
+            "event": "Game Week",
+            "drinker_name": "Name",
+            "drink_type": "Drink Type",
+            "nomination_deadline_date": "Deadline",
+            "nomination_completed_date": "Completed Date",
+        },
+        inplace=True,
+        )
+    return drinks_display
+
+
+
 # function to fetch managers from google sheets
 @st.cache_data(max_entries = 1,)
 def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
