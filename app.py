@@ -86,6 +86,11 @@ uno_data_display.index = np.arange(1, len(uno_data) + 1)
 most_litres_name, most_litres_qty = most_litres(drinks,"drinker_name", 'drink_size')
 
 nominate_flag = can_nominate_flag(drinks, current_gw, first_place)
+
+update_time = time_since_last_update()
+
+time_to_update = time_until_specified_time(update_time)
+
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 with st.sidebar:
     # capture week of nomination from backend
@@ -395,5 +400,7 @@ with rules_tab:
                 6. You can't Uno reverse someone else's Uno reverse.    
                 """
     )
+
+    st.text(f"Time till next update: {time_to_update}")
 end = time.time()
 print(end - start)

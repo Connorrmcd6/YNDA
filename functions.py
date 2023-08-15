@@ -355,6 +355,10 @@ def get_first_last(df, current_gw):
 
     return first_place_name, last_place_name
 
+@st.cache_data(ttl='6h',max_entries=1)
+def time_since_last_update():
+    time_plus_6_hours = datetime.now() + timedelta(hours=6)
+    return time_plus_6_hours
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
 def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
     try:
@@ -383,6 +387,14 @@ def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
         print("An error occurred:", e)
         return None
     
+def time_until_specified_time(target_time):
+    current_time = datetime.now()
+    time_difference = target_time - current_time
+    time_difference = target_time - current_time
+    hours, remainder = divmod(time_difference.seconds, 3600)
+    minutes = remainder // 60
+    time_format = f"{hours:02d}h:{minutes:02d}min"
+    return time_format
 
 def write_google_sheets_data(_gc, df, sheet_name, sheet_key):
     try:
