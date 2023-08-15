@@ -128,7 +128,7 @@ with st.sidebar:
                     )
                     deadline_date = (
                         datetime.now() + timedelta(hours=2) + timedelta(days=7)
-                    ).strftime("%d/%m/%y %H:00")
+                    ).strftime("%d/%m/%y")
 
                     data = {
                         "event": [current_week],
@@ -146,7 +146,7 @@ with st.sidebar:
                     )
                     st.success("Nomination Submitted")
         else:
-            st.error("You have already nominated this week")
+            st.error("Nominations have already been submitted for the week")
 
     st.header("OR")
 
@@ -184,17 +184,13 @@ with st.sidebar:
                     ).strftime("%d/%m/%y %H:00")
 
                     data = {
-                        "event": [current_week, current_week, current_week],
-                        "nominator_name": [nominator, nominator, nominator],
+                        "event": [current_week]*random_choice_amount,
+                        "nominator_name": [nominator]*random_choice_amount,
                         "drinker_name": random_nominees,
-                        "drink_type": ["nomination", "nomination", "nomination"],
-                        "created_date": [created_date, created_date, created_date],
-                        "deadline_date": [deadline_date, deadline_date, deadline_date],
-                        "completed_date": [
-                            "Not Completed",
-                            "Not Completed",
-                            "Not Completed",
-                        ],
+                        "drink_type": ["nomination"]*random_choice_amount,
+                        "created_date": [created_date]*random_choice_amount,
+                        "deadline_date": [deadline_date]*random_choice_amount,
+                        "completed_date": ["Not Completed"]*random_choice_amount
                     }
                 
                     df = pd.DataFrame(data)
@@ -204,11 +200,11 @@ with st.sidebar:
 
 
                     for i in range(random_choice_amount):
-                        st.text(f"{i}.{random_nominees[i]}")
+                        st.text(f"{i+1}.{random_nominees[i]}")
 
                     st.success("Nomination Submitted")
         else:
-            st.error("You have already nominated this week")
+            st.error("Nominations have already been submitted for the week")
 
     st.divider()
 

@@ -90,13 +90,14 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
 @st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
     drinks_display = drinks[drinks.event > current_week - 2]
-    drinks_display = drinks_display.iloc[:, [0, 2, 3, 5, 6]]
+    drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
+    drinks_display = drinks_display.iloc[:, [0, 2, 3, 11, 6]]
     drinks_display.rename(
         columns={
             "event": "Game Week",
             "drinker_name": "Name",
             "drink_type": "Drink Type",
-            "nomination_deadline_date": "Deadline",
+            "formatted_deadline_date": "Deadline",
             "nomination_completed_date": "Completed Date",
         },
         inplace=True,
@@ -106,13 +107,15 @@ def build_drinks_display(drinks, current_week):
 
 @st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display_expanded(drinks):
-    drinks_display = drinks.iloc[:, [0, 2, 3, 5, 6]]
+    drinks_display = drinks
+    drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
+    drinks_display = drinks.iloc[:, [0, 2, 3, 11, 6]]
     drinks_display.rename(
         columns={
             "event": "Game Week",
             "drinker_name": "Name",
             "drink_type": "Drink Type",
-            "nomination_deadline_date": "Deadline",
+            "formatted_deadline_date": "Deadline",
             "nomination_completed_date": "Completed Date",
         },
         inplace=True,
@@ -449,7 +452,7 @@ def categories(df):
     df = df.iloc[:, [2, 5, 6, 7]]
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
     # Define the conditions for the new column
-    condition1 = df["nomination_completed_date"] < df["nomination_deadline_date"]
+    condition1 = df["nomination_completed_date"] <= df["nomination_deadline_date"]
     condition2 = df["nomination_completed_date"] > df["nomination_deadline_date"]
     condition3 = df["nomination_completed_date"] == "Not Completed"
 
@@ -472,7 +475,7 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
         ]
         
         if filtered_drinks.empty:
-            return "You don't have any outstanding drinks"
+            return "You don't have any valid drinks to reverese"
 
         last_record_index = filtered_drinks.index[-1]
 
@@ -487,6 +490,7 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
 
     # Check if the nominee has already used their uno reverse card this season
     try:
+        #this if is useless, was added by chatgpt
         filtered_uno_data = uno_data[(uno_data["player_name"] == nominee)]
         if filtered_uno_data.empty:
             raise Exception("You haven't used your uno reverse card this season")
@@ -796,3 +800,8 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
 
 def can_nominate_flag(df, current_gw, first_place):
     return len(df[(df["event"] == current_gw) & (df["nominator_name"] == first_place)]) == 0
+
+def format_date(date_str):
+    date_object = datetime.strptime(date_str, "%d/%m/%y")
+    formatted_date = date_object.strftime("%d %B %Y")
+    return formatted_date
