@@ -303,7 +303,7 @@ def update(_gc):
     if len(events[events['is_current'] == True]) == 0:
         print('season hasn\'t started pull placeholder data')
         gw = 0
-        return False, gw
+        return False, gw, False, False
     
     gw = int(events[events["is_current"] == True]["id"])
     finished = bool(events[events["is_current"] == True]["finished"].values)
@@ -315,11 +315,11 @@ def update(_gc):
         if max_stored_gw < gw:      
             print('max stored_gw < current week')
             print('we will update here')
-            return True, gw
+            return True, gw,  finished, data_checked
         
         else: 
             print('data is already latest - pull from gs')
-            return False, max_stored_gw
+            return False, max_stored_gw, finished, data_checked
     else:
         print("its either a new week or the old week hasnt completetly finished - pull from gs")
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
