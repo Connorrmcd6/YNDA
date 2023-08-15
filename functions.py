@@ -803,5 +803,5 @@ def can_nominate_flag(df, current_gw, first_place):
 
 def format_date(date_str):
     date_object = datetime.strptime(date_str, "%d/%m/%y")
-    formatted_date = date_object.strftime("%d %B %Y")
+    formatted_date = date_object.strftime("%d %b")
     return formatted_date
