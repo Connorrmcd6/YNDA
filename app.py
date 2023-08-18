@@ -92,9 +92,7 @@ update_time = time_since_last_update()
 time_to_update = time_until_specified_time(update_time)
 
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
-with st.sidebar:
-    # capture week of nomination from backend
-    st.header("🎖️ Nominations")
+with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
     nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name")
 
@@ -211,9 +209,8 @@ with st.sidebar:
         else:
             st.error("Nominations have already been submitted for the week")
 
-    st.divider()
+with st.sidebar.expander("🍺 Submit a Drink?", expanded=False):
 
-    st.header("🍺 Submit Drinks")
 
     drink_submitter = st.selectbox(
         label="Your Name", options=managers, key="submit_name"
@@ -260,15 +257,17 @@ with st.sidebar:
 
 # '''------------------------------------------------------------APP------------------------------------------------------------'''
 drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
-    ["🍺 Drinks", "📈 Stats", "🏆 Awards", "ℹ️ Rules"]
+    ["Drinks", "Stats", "Awards", "Info"]
 )
 
 
-with drinks_tab:
-    st.header("Latest Drinks",
-              help='Drinks for the last 2 game weeks')
+with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
+
+
     if current_gw > 0 and finished and checked:
-        st.write(f"Latest winner: {first_place}")
+        st.markdown(f"""
+                    #### 🥇 Latest Winner: {first_place}
+                    """, help = 'Click the toggle to see all drinks for the season')
 
     drinks_toggle = tog.st_toggle_switch(label=False, 
                 key="Key1", 
@@ -284,15 +283,14 @@ with drinks_tab:
     else: 
         st.table(drinks_display)
 
-    st.header("Uno Reverse Cards",
-              help='List of players and if they have used their uno reverse card or not')
+        
+with drinks_tab.expander("🔁 Uno Reverse Cards", expanded= False):
+    st.text("" , help="This table shows who still has an Uno reverse card, you can use this card once per season to give your drink back to the person that nominated you")
     st.table(uno_data_display)
 
-with stats_tab:
-    st.header(
-        "Total Drinks",
-        help="Number of drinks completed on time, completed late and not completed for each person",
-    )
+with stats_tab.expander("📊     Total Drinks", expanded= True):
+    st.text("" , help="The chart below shows the number of drinks assigned to each person throughout the season")
+
     if "drinks_chart" not in st.session_state:
         df = categories(drinks)
         st.session_state.drinks_chart = df
@@ -304,7 +302,7 @@ with stats_tab:
         .mark_bar()
         .encode(
             alt.X("Name:O", axis=alt.Axis(title="Name"), sort="-y"),
-            alt.Y("sum(quantity):Q", axis=alt.Axis(title="Total Drinks")),
+            alt.Y("sum(quantity):Q", axis=alt.Axis(title="Drinks")),
             alt.Order("sum(quantity):Q", sort="descending"),
             alt.Color(
                 "Category:N",
@@ -314,35 +312,43 @@ with stats_tab:
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
-    st.header(
-        "League Ranks",
-        help="Each line represents a player, the higher the line the higher your rank in the league for that game week",
-    )
 
-    if "rank_chart" not in st.session_state:
-        rank_df = build_rank_df(gameweek_df, current_week)
-        st.session_state.rank_chart = rank_df
+
+if current_gw <= 1:
+    league_rank_expand = False
+else:
+    league_rank_expand = True
+
+with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
+
+    if current_gw <= 1:
+        st.info("wait until game week 2 to see a chart here")
     else:
-        rank_df = st.session_state.rank_chart
+        st.text("" , help="This shows player rank changes for the last 10 gameweeks")
 
-    rank_chart = alt.layer(
-        alt.Chart(rank_df)
-        .mark_line()
-        .encode(
-            alt.X("event:O", axis=alt.Axis(title="Game Week")),
-            alt.Y("rank:O", axis=alt.Axis(title="League Rank")),
-            alt.Color(
-                "player_name:N",
-                legend=alt.Legend(orient="bottom", columns=2, title=None),
-            ),
-        )
-    ).interactive()
+        if "rank_chart" not in st.session_state:
+            rank_df = build_rank_df(gameweek_df, current_week)
+            st.session_state.rank_chart = rank_df
+        else:
+            rank_df = st.session_state.rank_chart
 
-    st.altair_chart(rank_chart, use_container_width=True)
+        rank_chart = alt.layer(
+            alt.Chart(rank_df)
+            .mark_line()
+            .encode(
+                alt.X("event:O", axis=alt.Axis(title="Game Week")),
+                alt.Y("rank:O", axis=alt.Axis(title="League Rank")),
+                alt.Color(
+                    "player_name:N",
+                    legend=alt.Legend(orient="bottom", columns=2, title=None),
+                ),
+            )
+        ).interactive()
 
-    st.header("Fastest Lap Times",
-              help="Time to complete a down scaled to 330mls ex. if you drank a 500ml in 5s your time will be listed as (330/500)x(5) = 3.3s")
-    
+        st.altair_chart(rank_chart, use_container_width=True)
+
+with stats_tab.expander("🏎️     Fastest Lap Times", expanded= False):
+    st.markdown("""### 🏁 Tops at Spa Grand Prix""", help="Lap times are the time taken to complete a 330ml down. for example if you drank a 500ml in 5s your time will be listed as (330/500)x(5) = 3.3s")
     st.table(build_laps(drinks))
 
 with awards_tab:
@@ -388,10 +394,9 @@ with awards_tab:
         help=f"{lowest_score_player_name} had the worst game week of the season ({lowest_score_points} points in game week {lowest_score_event})",
     )
 
-with rules_tab:
+with rules_tab.expander("✏️ Rules", expanded= False):
     st.markdown(
         """
-                ## Rules of the game
                 1. First place for each week can nominate one person of their choice or randomly nominate three people (with the chance of picking themselves).
                 2. Last place for each week will be assigned a drink.
                 3. If you have a player with a red card, own goal, or missed penalty in your :red[**final 11**], you will be assigned a drink.
@@ -401,6 +406,7 @@ with rules_tab:
                 """
     )
 
-    st.text(f"Time till next update: {time_to_update}")
+with rules_tab.expander("⏱️ Next Refresh", expanded= False):
+    st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
 end = time.time()
 print(end - start)
