@@ -10,6 +10,8 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import matplotlib.pyplot as plt
 import altair as alt
+import base64
+import textwrap
 import requests
 from configs import *
 
@@ -23,6 +25,17 @@ def connect_to_gs(_service_account_key):
     credentials = service_account.Credentials.from_service_account_info(_service_account_key, scopes=scopes)
     gs_connection = gspread.authorize(credentials)
     return gs_connection
+
+@st.cache_resource(max_entries = 1,)
+def render_svg(path):
+    f = open(path,"r")
+    lines = f.readlines()
+    line_string=''.join(lines)
+    """Renders the given svg string."""
+    b64 = base64.b64encode(line_string.encode('utf-8')).decode("utf-8")
+    html = r'<img src="data:image/svg+xml;base64,%s"/>' % b64
+    st.write(html, unsafe_allow_html=True)
+    st.markdown(""" ### """)
 
 
 # function to fetch gw data from google sheets

@@ -94,7 +94,7 @@ time_to_update = time_until_specified_time(update_time)
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 
 with st.sidebar:
-    st.header("Welcome to YNDA")
+    render_svg("assets/logo.svg")
 
 with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
@@ -260,6 +260,7 @@ with st.sidebar.expander("🍺 Submit a Drink?", expanded=False):
                             st.error(r)
 
 # '''------------------------------------------------------------APP------------------------------------------------------------'''
+
 drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
     ["Drinks", "Stats", "Awards", "Info"]
 )
