@@ -92,6 +92,10 @@ update_time = time_since_last_update()
 time_to_update = time_until_specified_time(update_time)
 
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
+
+with st.sidebar:
+    st.header("Welcome to YNDA")
+
 with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
     nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name")
@@ -285,7 +289,7 @@ with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
 
         
 with drinks_tab.expander("🔁 Uno Reverse Cards", expanded= False):
-    st.text("" , help="This table shows who still has an Uno reverse card, you can use this card once per season to give your drink back to the person that nominated you")
+    st.markdown(""" #### Who still has their Uno reverse cards?""" , help="This table shows who still has an Uno reverse card, you can use this card once per season to give your drink back to the person that nominated you")
     st.table(uno_data_display)
 
 with stats_tab.expander("📊     Total Drinks", expanded= True):
@@ -322,7 +326,7 @@ else:
 with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
 
     if current_gw <= 1:
-        st.info("wait until game week 2 to see a chart here")
+        st.info("Wait until game week 2 to see a chart here")
     else:
         st.text("" , help="This shows player rank changes for the last 10 gameweeks")
 
@@ -406,7 +410,35 @@ with rules_tab.expander("✏️ Rules", expanded= False):
                 """
     )
 
+
+
+with rules_tab.expander("🤷🏻‍♂️ How to Nominate Submit a Drink or Uno Reverse ", expanded= False):
+    st.markdown("""
+                #### Nominating:
+                1. Click the arrow on the top left to open the side bar.
+                2. Click on the `🎖️ Nominate Someone` tab.
+                3. Fill in your name, this is so we know who to give the drink to if one of your nominees decides to uno reverse.
+                4. If you are choosing a specific person then select their name in the \"Nominate" box and click submit.
+                5. If you are randomly nominating, just click the random button and send a screenshot to the group chat.
+
+                ###
+                #### Submitting:
+                1. Send a video to the group chat of you downing your drink. You can include a stop watch if you wanted be included in the Grand Prix (this is optional).
+                2. Click the arrow on the top left to open the side bar.
+                3. Click on the `🍺 Submit a Drink?` tab.
+                4. Fill in your name and the size of your drink.
+                5. Click `Submit`.
+
+                ###
+                #### Uno Reverse:
+                1. Click the arrow on the top left to open the side bar.
+                2. Click on the `🍺 Submit a Drink?` tab.
+                3. Fill out your name.
+                4. Click on the `Uno` button.
+                """)
 with rules_tab.expander("⏱️ Next Refresh", expanded= False):
     st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
+
+
 end = time.time()
 print(end - start)
