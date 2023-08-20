@@ -301,11 +301,7 @@ with drinks_tab.expander("🔁 Uno Reverse Cards", expanded= False):
 with stats_tab.expander("📊     Total Drinks", expanded= True):
     st.text("" , help="The chart below shows the number of drinks assigned to each person throughout the season")
 
-    if "drinks_chart" not in st.session_state:
-        df = categories(drinks)
-        st.session_state.drinks_chart = df
-    else:
-        df = st.session_state.drinks_chart
+    df = categories(drinks)
 
     bar_chart = (
         alt.Chart(df)
@@ -326,21 +322,19 @@ with stats_tab.expander("📊     Total Drinks", expanded= True):
 
 if current_gw <= 1:
     league_rank_expand = False
+if current_gw == 2 and not finished and not checked:
+    league_rank_expand = False
 else:
     league_rank_expand = True
 
 with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
 
     if current_gw <= 1:
-        st.info("Wait until game week 2 to see a chart here")
+        st.info("Wait until game week 2 finishes to see a chart here")
+    if current_gw == 2 and not finished and not checked:
+        st.info("Wait until game week 2 finishes to see a chart here")
     else:
         st.text("" , help="This shows player rank changes for the last 10 gameweeks")
-
-        # if "rank_chart" not in st.session_state:
-        #     rank_df = build_rank_df(gameweek_df, current_week)
-        #     st.session_state.rank_chart = rank_df
-        # else:
-        #     rank_df = st.session_state.rank_chart
 
         rank_chart = alt.layer(
             alt.Chart(rank_df)
@@ -429,7 +423,7 @@ with rules_tab.expander("🤷🏻‍♂️ How to Nominate Submit a Drink or Uno
 
                 ###
                 #### Submitting:
-                1. Send a video to the group chat of you downing your drink. You can include a stop watch if you wanted be included in the Grand Prix (this is optional).
+                1. Send a video to the group chat of you downing your drink. You can include a stop watch if you want to be included in the Grand Prix (this is optional).
                 2. Click the arrow on the top left to open the side bar.
                 3. Click on the `🍺 Submit a Drink?` tab.
                 4. Fill in your name and the size of your drink.
@@ -446,7 +440,13 @@ with rules_tab.expander("⏱️ Next Refresh", expanded= False):
     st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
 
     if st.button('Manual Refresh'):
-        st.cache_data.clear()
+        fetch_drinks_data.clear()
+        build_drinks_display.clear()
+        build_drinks_display_expanded.clear()
+        fetch_uno_data.clear()
+        most_litres.clear()
+        build_laps.clear()
+        time_since_last_update.clear()
         st.experimental_rerun()
 
 end = time.time()
