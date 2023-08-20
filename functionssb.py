@@ -19,14 +19,15 @@ from configs import *
 #'''------------------------------------------------------------CACHE FUNCTIONS------------------------------------------------------------'''
 
 # function to create api connection to google sheets
-@st.cache_resource(max_entries = 1,)
+
 def connect_to_gs(_service_account_key):
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
     credentials = service_account.Credentials.from_service_account_info(_service_account_key, scopes=scopes)
     gs_connection = gspread.authorize(credentials)
     return gs_connection
 
-@st.cache_resource(max_entries = 1,)
+
+
 def render_logo(path):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -63,7 +64,6 @@ def render_svg_banner(path, width=None, height=None, gw_number=None, first_place
 
 
 # function to fetch gw data from google sheets
-@st.cache_data(max_entries = 1,)
 def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -94,7 +94,6 @@ def fetch_gameweek_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to fetch drinks data from google sheets
-@st.cache_data(ttl='6h', max_entries = 1,)
 def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -124,7 +123,6 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
         return None
 
 #build drinks display table
-@st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
     drinks_display = drinks[drinks.event > current_week - 2]
     drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
@@ -142,7 +140,6 @@ def build_drinks_display(drinks, current_week):
     return drinks_display
 
 
-@st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display_expanded(drinks):
     drinks_display = drinks
     drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
@@ -161,7 +158,6 @@ def build_drinks_display_expanded(drinks):
 
 
 # function to fetch managers from google sheets
-@st.cache_data(max_entries = 1,)
 def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -192,7 +188,6 @@ def fetch_manager_data(_gc, sheet_name, sheet_key, columns_list):
 
 
 # function to fetch uno data from google sheets
-@st.cache_data(ttl='6h', max_entries = 1,)
 def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
     try:
         # Open specific sheet
@@ -222,8 +217,6 @@ def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
         return None
 
 
-# function to return season metrics
-@st.cache_data(max_entries = 1,)
 def create_metrics(df):
 
     # Sort the DataFrame in descending order of points, then descending order of total_points then alphabetically
@@ -295,7 +288,6 @@ def create_metrics(df):
     )
 
 
-@st.cache_data(max_entries = 1,)
 def fetch_max_gw(_gc, sheet_name, sheet_key):
     try:
         # Open specific sheet
@@ -326,14 +318,12 @@ def fetch_max_gw(_gc, sheet_name, sheet_key):
         print("An error occurred:", e)
         return None
 
-@st.cache_data(ttl='6h',max_entries=1)
 def most_litres(df, name_col, qty_col):
     grouped_data = df.groupby(name_col)[qty_col].sum()
     highest_category = grouped_data.idxmax()
     highest_sum = np.round(grouped_data.max()/1000, 2)
     return highest_category, highest_sum
 
-@st.cache_data(ttl='6h',max_entries=1)
 def update(_gc):
     with requests.Session() as session:
         general_response = session.get(general_endpoint).json()
@@ -364,15 +354,12 @@ def update(_gc):
         print(f"finished: {finished}\nchecked: {data_checked}\ngame week: {gw}")
         return False, gw, finished, data_checked
     
-
-@st.cache_data(max_entries = 1,)
 def get_illegible_nominees(df, current_gw):
     red_card_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'red card')]['drinker_name'].tolist()
     own_goal_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'own goal')]['drinker_name'].tolist()
     missed_pen_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'missed pen')]['drinker_name'].tolist()
     return red_card_players, own_goal_players, missed_pen_players
 
-@st.cache_data(max_entries = 1,)
 def get_first_last(df, current_gw):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw]
@@ -409,7 +396,6 @@ def get_previous_first_last(df, current_gw):
 
     return first_place_name, last_place_name,first_team_name
 
-@st.cache_data(ttl='6h',max_entries=1)
 def time_since_last_update():
     time_plus_6_hours = datetime.now() + timedelta(hours=6)
     return time_plus_6_hours

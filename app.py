@@ -59,12 +59,12 @@ drinks_display_expanded = build_drinks_display_expanded(drinks)
 drinks_display_expanded.index = np.arange(1, len(drinks_display_expanded) + 1)
 
 
-first_place, last_place = get_first_last(gameweek_df, current_gw)
+first_place, last_place, first_team_name = get_first_last(gameweek_df, current_gw)
 red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
 
 #this has a cache reset every 6 hours because it can change during the week
 uno_data = fetch_uno_data(gs_connection, managers_table, prod_google_sheet_key, [])
-uno_data_display = uno_data.iloc[:, [1, 3]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
+uno_data_display = uno_data.iloc[:, [1, 4]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
 uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
 uno_data_display.index = np.arange(1, len(uno_data) + 1)
 
@@ -94,7 +94,7 @@ time_to_update = time_until_specified_time(update_time)
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 
 with st.sidebar:
-    render_svg("assets/logo.svg")
+    render_logo("assets/logo.svg")
 
 with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
@@ -267,12 +267,13 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 
 
 with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
-
-
+    
     if current_gw > 0 and finished and checked:
-        st.markdown(f"""
-                    #### 🥇 Latest Winner: {first_place}
-                    """, help = 'Click the toggle to see all drinks for the season')
+        render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
+
+    elif current_gw > 0 and not finished or not checked:
+        first_place, last_place, first_team_name = get_previous_first_last(gameweek_df, current_gw)
+        render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
 
     drinks_toggle = tog.st_toggle_switch(label=False, 
                 key="Key1", 
