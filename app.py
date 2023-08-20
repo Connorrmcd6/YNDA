@@ -91,6 +91,10 @@ update_time = time_since_last_update()
 
 time_to_update = time_until_specified_time(update_time)
 
+laps_df = build_laps(drinks)
+
+rank_df = build_rank_df(gameweek_df, current_week)
+
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 
 with st.sidebar:
@@ -332,11 +336,11 @@ with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
     else:
         st.text("" , help="This shows player rank changes for the last 10 gameweeks")
 
-        if "rank_chart" not in st.session_state:
-            rank_df = build_rank_df(gameweek_df, current_week)
-            st.session_state.rank_chart = rank_df
-        else:
-            rank_df = st.session_state.rank_chart
+        # if "rank_chart" not in st.session_state:
+        #     rank_df = build_rank_df(gameweek_df, current_week)
+        #     st.session_state.rank_chart = rank_df
+        # else:
+        #     rank_df = st.session_state.rank_chart
 
         rank_chart = alt.layer(
             alt.Chart(rank_df)
@@ -355,7 +359,7 @@ with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
 
 with stats_tab.expander("🏎️     Fastest Lap Times", expanded= False):
     st.markdown("""### 🏁 Tops at Spa Grand Prix""", help="Lap times are the time taken to complete a 330ml down. for example if you drank a 500ml in 5s your time will be listed as (330/500)x(5) = 3.3s")
-    st.table(build_laps(drinks))
+    st.table(laps_df)
 
 with awards_tab:
     (
@@ -441,6 +445,9 @@ with rules_tab.expander("🤷🏻‍♂️ How to Nominate Submit a Drink or Uno
 with rules_tab.expander("⏱️ Next Refresh", expanded= False):
     st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
 
+    if st.button('Manual Refresh'):
+        st.cache_data.clear()
+        st.experimental_rerun()
 
 end = time.time()
 print(end - start)

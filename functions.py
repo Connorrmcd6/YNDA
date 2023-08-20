@@ -26,7 +26,7 @@ def connect_to_gs(_service_account_key):
     gs_connection = gspread.authorize(credentials)
     return gs_connection
 
-@st.cache_resource(max_entries = 1,)
+@st.cache_data(max_entries = 1,)
 def render_logo(path):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -37,7 +37,7 @@ def render_logo(path):
     st.write(img_tag, unsafe_allow_html=True)
     st.markdown("###")
 
-
+@st.cache_data(max_entries = 1,)
 def render_svg_banner(path, width=None, height=None, gw_number=None, first_place_name=None, team_name=None):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -391,6 +391,7 @@ def get_first_last(df, current_gw):
 
     return first_place_name, last_place_name,first_team_name
 
+@st.cache_data(max_entries = 1,)
 def get_previous_first_last(df, current_gw):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw-1]
@@ -408,6 +409,46 @@ def get_previous_first_last(df, current_gw):
     first_team_name = sorted_df.iloc[0].entry_name
 
     return first_place_name, last_place_name,first_team_name
+
+@st.cache_data(max_entries = 1,)
+def build_rank_df(gameweek_df, current_week):
+    last_10 = gameweek_df[gameweek_df.event >= current_week - 10][["event", "player_name", "total_points"]]
+    # last_10 = gameweek_df[gameweek_df.event<=10].iloc[:,[0,2,4]]
+    last_10["rank"] = (
+        last_10.groupby(["event"])["total_points"].rank(ascending=False).astype(int)
+    )
+    return last_10
+
+@st.cache_data(ttl='6h', max_entries = 1,)
+def build_laps(df):
+    # Filter rows with relevant columns and non-null values
+    drinks_lap_times = df[['drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
+                          'start_time', 'end_time', 'drink_size']].dropna()
+
+    # Filter rows with valid nomination completion date
+    drinks_lap_times = drinks_lap_times[drinks_lap_times['nomination_completed_date'] < drinks_lap_times['nomination_deadline_date']]
+
+    # Compute the lap times
+    drinks_lap_times['completion_time'] = np.round((drinks_lap_times['end_time'] - drinks_lap_times['start_time']) * (330 / drinks_lap_times['drink_size']), 3)
+
+    # Sort by completion_time
+    drinks_lap_times = drinks_lap_times.sort_values(by='completion_time')
+
+    # Compute the gap from the fastest time
+    fastest_time = drinks_lap_times['completion_time'].min()
+    drinks_lap_times['gap'] = drinks_lap_times['completion_time'] - fastest_time
+    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
+
+    # Select and format the relevant columns
+    display_times = drinks_lap_times[[ 'drinker_name', 'completion_time', 'gap']]
+    display_times.index = np.arange(1, len(display_times) + 1)
+
+    # Rename the columns
+    display_times.rename(
+        columns={"drinker_name": "Driver", "completion_time": "Lap Time", "gap": "Gap"},
+        inplace=True
+    )
+    return display_times
 
 @st.cache_data(ttl='6h',max_entries=1)
 def time_since_last_update():
@@ -601,44 +642,6 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
         return None
 
     return None
-
-def build_rank_df(gameweek_df, current_week):
-    last_10 = gameweek_df[gameweek_df.event >= current_week - 10][["event", "player_name", "total_points"]]
-    # last_10 = gameweek_df[gameweek_df.event<=10].iloc[:,[0,2,4]]
-    last_10["rank"] = (
-        last_10.groupby(["event"])["total_points"].rank(ascending=False).astype(int)
-    )
-    return last_10
-
-def build_laps(df):
-    # Filter rows with relevant columns and non-null values
-    drinks_lap_times = df[['drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
-                          'start_time', 'end_time', 'drink_size']].dropna()
-
-    # Filter rows with valid nomination completion date
-    drinks_lap_times = drinks_lap_times[drinks_lap_times['nomination_completed_date'] < drinks_lap_times['nomination_deadline_date']]
-
-    # Compute the lap times
-    drinks_lap_times['completion_time'] = np.round((drinks_lap_times['end_time'] - drinks_lap_times['start_time']) * (330 / drinks_lap_times['drink_size']), 3)
-
-    # Sort by completion_time
-    drinks_lap_times = drinks_lap_times.sort_values(by='completion_time')
-
-    # Compute the gap from the fastest time
-    fastest_time = drinks_lap_times['completion_time'].min()
-    drinks_lap_times['gap'] = drinks_lap_times['completion_time'] - fastest_time
-    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
-
-    # Select and format the relevant columns
-    display_times = drinks_lap_times[[ 'drinker_name', 'completion_time', 'gap']]
-    display_times.index = np.arange(1, len(display_times) + 1)
-
-    # Rename the columns
-    display_times.rename(
-        columns={"drinker_name": "Driver", "completion_time": "Lap Time", "gap": "Gap"},
-        inplace=True
-    )
-    return display_times
 
 def fetch_max_gw_helper(_gc, sheet_name, sheet_key):
     try:
