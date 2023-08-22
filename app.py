@@ -273,11 +273,11 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
     
     if current_gw > 0 and finished and checked:
-        render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
+        render_svg_banner("assets/banner_short.svg", width=100, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
 
     elif current_gw > 0 and (not finished or not checked):
         first_place, last_place, first_team_name = get_previous_first_last(gameweek_df, current_gw)
-        render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
+        render_svg_banner("assets/banner_short.svg", width=100, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
 
     drinks_toggle = tog.st_toggle_switch(label=False, 
                 key="Key1", 

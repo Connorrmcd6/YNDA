@@ -37,7 +37,7 @@ def render_logo(path):
     st.write(img_tag, unsafe_allow_html=True)
     st.markdown("###")
 
-@st.cache_data(max_entries = 1,)
+# @st.cache_data(max_entries = 1,)
 def render_svg_banner(path, width=None, height=None, gw_number=None, first_place_name=None, team_name=None):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -126,17 +126,15 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
 #build drinks display table
 @st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
-    drinks_display = drinks[drinks.event > current_week - 2]
+    drinks_display = drinks[drinks.event == current_week]
+    drinks_display = drinks[drinks.nomination_completed_date == "Not Completed"]
     drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
-    drinks_display['formatted_completed_date'] = drinks_display['nomination_completed_date'].apply(lambda x: format_date(x))
-    drinks_display = drinks_display.iloc[:, [0, 2, 3, 11, 12]]
+    drinks_display = drinks_display.iloc[:, [2, 3, 11]]
     drinks_display.rename(
         columns={
-            "event": "Game Week",
             "drinker_name": "Name",
             "drink_type": "Drink Type",
             "formatted_deadline_date": "Deadline",
-            "formatted_completed_date": "Completed Date",
         },
         inplace=True,
         )
@@ -433,16 +431,19 @@ def build_laps(df):
     # Compute the lap times
     drinks_lap_times['completion_time'] = np.round((drinks_lap_times['end_time'] - drinks_lap_times['start_time']) * (330 / drinks_lap_times['drink_size']), 3)
 
-    # Sort by completion_time
-    drinks_lap_times = drinks_lap_times.sort_values(by='completion_time')
+    # Group by drinker_name and find the minimum completion_time
+    fastest_times = drinks_lap_times.groupby('drinker_name')['completion_time'].min()
+
+    # Create a DataFrame with fastest times
+    fastest_times_df = pd.DataFrame({'drinker_name': fastest_times.index, 'completion_time': fastest_times.values})
 
     # Compute the gap from the fastest time
-    fastest_time = drinks_lap_times['completion_time'].min()
-    drinks_lap_times['gap'] = drinks_lap_times['completion_time'] - fastest_time
-    drinks_lap_times['gap'] = drinks_lap_times['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
+    fastest_time = fastest_times_df['completion_time'].min()
+    fastest_times_df['gap'] = fastest_times_df['completion_time'] - fastest_time
+    fastest_times_df['gap'] = fastest_times_df['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
 
     # Select and format the relevant columns
-    display_times = drinks_lap_times[[ 'drinker_name', 'completion_time', 'gap']]
+    display_times = fastest_times_df[['drinker_name', 'completion_time', 'gap']]
     display_times.index = np.arange(1, len(display_times) + 1)
 
     # Rename the columns
@@ -451,6 +452,7 @@ def build_laps(df):
         inplace=True
     )
     return display_times
+
 
 @st.cache_data(ttl='6h',max_entries=1)
 def time_since_last_update():
