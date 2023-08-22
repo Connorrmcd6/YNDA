@@ -361,42 +361,17 @@ with awards_tab:
         col2,
     ) = st.columns(2)
 
-    # column 1
-    col1.metric(
-        "The Golden Boot",
-        f"{most_1st_place_player}",
-        help=f"{most_1st_place_player} has the most first place finishes ({most_1st_place_count} times)",
-    )
 
-    col1.metric(
-        "The Relegation Warrior",
-        f"{most_last_place_player}",
-        help=f"{most_last_place_player} has the most last place finishes ({most_last_place_count} times)",
-    )
+    with col1:
+        render_svg_metric("assets/golden_boot.svg", width=None, height=None, name=most_1st_place_player, metric_name="Golden Boot", value_str=f"{most_1st_place_count} first place finishes")
+        render_svg_metric("assets/warrior.svg", width=None, height=None, name=most_last_place_player, metric_name="Relegation Warrior", value_str=f"{most_last_place_count} last place finishes")
+        render_svg_metric("assets/bench.svg", width=None, height=None, name=player_with_highest_points_on_bench, metric_name="Warmest Bench" , value_str=f"{player_with_highest_points_on_bench_count} points on bench")
 
-    col1.metric(
-        "The Warmest Bench",
-        f"{player_with_highest_points_on_bench}",
-        help=f"{player_with_highest_points_on_bench} has accumulated the most bench points ({player_with_highest_points_on_bench_count} points)",
-    )
-    # column 2
-    col2.metric(
-        "The Big Hitter",
-        f"{player_with_highest_cost}",
-        help=f"{player_with_highest_cost} has taken the most hits ({player_with_highest_cost_count/4:.0f} hits)",
-    )
 
-    col2.metric(
-        "The Heavyweight",
-        f"{most_litres_name}",
-        help=f"{most_litres_name} has drank the most litres of beer this season ({most_litres_qty}ℓ)",
-    )
-
-    col2.metric(
-        "The Wooden Boot",
-        f"{lowest_score_player_name}",
-        help=f"{lowest_score_player_name} had the worst game week of the season ({lowest_score_points} points in game week {lowest_score_event})",
-    )
+    with col2: 
+        render_svg_metric("assets/big_hitter.svg", width=None, height=None, name=player_with_highest_cost, metric_name="Big Hitter", value_str=f"{player_with_highest_cost_count/4:.0f} hits taken" )
+        render_svg_metric("assets/heavyweight.svg", width=None, height=None, name=most_litres_name, metric_name="Heavy Weight", value_str=f"{most_litres_qty}ℓ of beer consumed")
+        render_svg_metric("assets/wooden_boot.svg", width=None, height=None, name=lowest_score_player_name, metric_name="Wooden Boot", value_str=f"{lowest_score_points} points in game week {lowest_score_event}")
 
 with rules_tab.expander("✏️ Rules", expanded= False):
     st.markdown(

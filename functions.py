@@ -37,7 +37,7 @@ def render_logo(path):
     st.write(img_tag, unsafe_allow_html=True)
     st.markdown("###")
 
-# @st.cache_data(max_entries = 1,)
+@st.cache_data(max_entries = 1,)
 def render_svg_banner(path, width=None, height=None, gw_number=None, first_place_name=None, team_name=None):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -60,6 +60,33 @@ def render_svg_banner(path, width=None, height=None, gw_number=None, first_place
     img_tag = f'<img src="data:image/svg+xml;base64,{b64_svg}" style="{style}"/>'
     
     st.write(img_tag, unsafe_allow_html=True)
+
+
+def render_svg_metric(path, width=None, height=None, name=None, metric_name=None, value_str=None):
+    with open(path, "r") as f:
+        svg_content = f.read()
+
+    if name is not None:
+        svg_content = svg_content.replace("@name", str(name).upper())
+    if metric_name is not None:
+        svg_content = svg_content.replace("@metric_name", metric_name.upper())
+    if value_str is not None:
+        svg_content = svg_content.replace("@value", value_str)
+
+
+    b64_svg = base64.b64encode(svg_content.encode('utf-8')).decode("utf-8")
+
+    style = ""
+    if width is not None:
+        style += f"width: {width}%;"
+    if height is not None:
+        style += f"height: {height}%;"
+        
+    img_tag = f'<img src="data:image/svg+xml;base64,{b64_svg}" style="{style}"/>'
+    
+    st.write(img_tag, unsafe_allow_html=True)
+
+
 
 
 # function to fetch gw data from google sheets
