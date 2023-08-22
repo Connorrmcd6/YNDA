@@ -450,5 +450,6 @@ with rules_tab.expander("⏱️ Next Refresh", expanded= False):
         time_since_last_update.clear()
         st.experimental_rerun()
 
+    st.code(f'status:\ngame week finished: {finished}\ngame week data checked: {checked}')
 end = time.time()
 print(end - start)
