@@ -270,6 +270,7 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 )
 
 
+
 with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
     
     if current_gw > 0 and finished and checked:
@@ -302,6 +303,8 @@ with stats_tab.expander("📊     Total Drinks", expanded= True):
     st.text("" , help="The chart below shows the number of drinks assigned to each person throughout the season")
 
     df = categories(drinks)
+    domain = ['Completed', 'Late', 'Outstanding']
+    range_ = ['#c62828', '	#ef9a8d', '#777777']
 
     bar_chart = (
         alt.Chart(df)
@@ -312,6 +315,7 @@ with stats_tab.expander("📊     Total Drinks", expanded= True):
             alt.Order("sum(quantity):Q", sort="descending"),
             alt.Color(
                 "Category:N",
+                scale=alt.Scale(domain=domain, range=range_),
                 legend=alt.Legend(orient="top", direction="horizontal", title=None),
             ),
         )
@@ -336,18 +340,15 @@ with stats_tab.expander("📈     League Ranks", expanded = league_rank_expand):
     else:
         st.text("" , help="This shows player rank changes for the last 10 gameweeks")
 
-        rank_chart = alt.layer(
-            alt.Chart(rank_df)
-            .mark_line()
-            .encode(
+        rank_chart = alt.Chart(rank_df).mark_line().encode(
                 alt.X("event:O", axis=alt.Axis(title="Game Week")),
                 alt.Y("rank:O", axis=alt.Axis(title="League Rank")),
                 alt.Color(
                     "player_name:N",
+                    scale=alt.Scale(scheme='category20'),
                     legend=alt.Legend(orient="bottom", columns=2, title=None),
                 ),
             )
-        ).interactive()
 
         st.altair_chart(rank_chart, use_container_width=True)
 
