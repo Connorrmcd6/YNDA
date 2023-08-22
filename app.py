@@ -275,7 +275,7 @@ with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
     if current_gw > 0 and finished and checked:
         render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
 
-    elif current_gw > 0 and not finished or not checked:
+    elif current_gw > 0 and (not finished or not checked):
         first_place, last_place, first_team_name = get_previous_first_last(gameweek_df, current_gw)
         render_svg_banner("assets/banner.svg", width=50, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
 
@@ -440,6 +440,7 @@ with rules_tab.expander("⏱️ Next Refresh", expanded= False):
     st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
 
     if st.button('Manual Refresh'):
+        update.clear()
         fetch_drinks_data.clear()
         build_drinks_display.clear()
         build_drinks_display_expanded.clear()
