@@ -442,6 +442,9 @@ def build_laps(df):
     fastest_times_df['gap'] = fastest_times_df['completion_time'] - fastest_time
     fastest_times_df['gap'] = fastest_times_df['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
 
+    # Sort by completion_time
+    fastest_times_df = fastest_times_df.sort_values(by='completion_time')
+
     # Select and format the relevant columns
     display_times = fastest_times_df[['drinker_name', 'completion_time', 'gap']]
     display_times.index = np.arange(1, len(display_times) + 1)
@@ -452,7 +455,6 @@ def build_laps(df):
         inplace=True
     )
     return display_times
-
 
 @st.cache_data(ttl='6h',max_entries=1)
 def time_since_last_update():
