@@ -186,6 +186,12 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
                             i for i in managers_temp if i not in missed_pen
                         ]
 
+                    #incase halaand misses another pen and no one can nominate
+                    if len(managers_temp) == 0:
+                        managers_temp = managers[:]
+                        managers_temp.remove("")
+                        managers_temp.remove(last_place)
+
                     random_nominees = sample(managers_temp, random_choice_amount)
                     created_date = (datetime.now() + timedelta(hours=2)).strftime(
                         "%d/%m/%y %H:%M:%S"
