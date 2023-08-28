@@ -58,12 +58,20 @@ drinks_display.index = np.arange(1, len(drinks_display) + 1)
 drinks_display_expanded = build_drinks_display_expanded(drinks)
 drinks_display_expanded.index = np.arange(1, len(drinks_display_expanded) + 1)
 
-
+litres, missed_pen_count, red_card_count, own_goal_count, nomination_count = analyze_drinks(drinks)
 first_place, last_place, first_team_name = get_first_last(gameweek_df, current_gw)
 red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
 
 #this has a cache reset every 6 hours because it can change during the week
 uno_data = fetch_uno_data(gs_connection, managers_table, prod_google_sheet_key, [])
+if needs_new_uno(uno_data,last_place) == True:
+    give_new_uno(gs_connection, prod_google_sheet_key, uno_data, last_place)
+    print(f"{last_place} got a new uno reverse card")
+    fetch_uno_data.clear()
+    uno_data = fetch_uno_data(gs_connection, managers_table, prod_google_sheet_key, [])
+else:
+    print("no one needed a new uno card this week")
+
 uno_data_display = uno_data.iloc[:, [1, 4]].sort_values(["uno_reverse", "player_name"], ascending=(False, True))
 uno_data_display.rename(columns={"player_name": "Name", "uno_reverse": "Has Uno Reverse"}, inplace=True)
 uno_data_display.index = np.arange(1, len(uno_data) + 1)
@@ -120,17 +128,17 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
             elif nominator != first_place:
                 st.error("You did not win the Game Week")
 
-            elif nominee in red_cards:
-                st.error("This person got a red card, pick someone else")
+            # elif nominee in red_cards:
+            #     st.error("This person got a red card, pick someone else")
 
-            elif nominee in own_goals:
-                st.error("This person got an own goal, pick someone else")
+            # elif nominee in own_goals:
+            #     st.error("This person got an own goal, pick someone else")
 
-            elif nominee in missed_pen:
-                st.error("This person got negative points, pick someone else")
+            # elif nominee in missed_pen:
+            #     st.error("This person got negative points, pick someone else")
 
-            elif nominee == last_place:
-                st.error("This person came last, pick someone else")
+            # elif nominee == last_place:
+            #     st.error("This person came last, pick someone else")
 
             else:
                 with st.spinner(text="Submitting..."):
@@ -187,7 +195,7 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
                         ]
 
                     #incase halaand misses another pen and no one can nominate
-                    if len(managers_temp) == 0:
+                    if len(managers_temp) <= 3:
                         managers_temp = managers[:]
                         managers_temp.remove("")
                         managers_temp.remove(last_place)
@@ -304,6 +312,12 @@ with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
 with drinks_tab.expander("🔁 Uno Reverse Cards", expanded= False):
     st.markdown(""" #### Who still has their Uno reverse cards?""" , help="This table shows who still has an Uno reverse card, you can use this card once per season to give your drink back to the person that nominated you")
     st.table(uno_data_display)
+
+
+with stats_tab:
+    render_svg_summary("assets/summary_banner.svg", width=None, height=None, ls=litres, mps=missed_pen_count, rcs=red_card_count, ogs=own_goal_count, nms=nomination_count)
+
+
 
 with stats_tab.expander("📊     Total Drinks", expanded= True):
     st.text("" , help="The chart below shows the number of drinks assigned to each person throughout the season")

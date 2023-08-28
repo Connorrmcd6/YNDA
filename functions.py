@@ -43,7 +43,7 @@ def render_svg_banner(path, width=None, height=None, gw_number=None, first_place
         svg_content = f.read()
 
     if gw_number is not None:
-        svg_content = svg_content.replace("@gw_number", str(gw_number).upper())
+        svg_content = svg_content.replace("@gw_number", str(gw_number))
     if first_place_name is not None:
         svg_content = svg_content.replace("@first_place_name", first_place_name.upper())
     if team_name is not None:
@@ -150,6 +150,35 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
         print("An error occurred:", e)
         return None
 
+@st.cache_data(ttl='6h', max_entries = 1,)
+def render_svg_summary(path, width=None, height=None, ls=None, mps=None, rcs=None, ogs=None, nms=None):
+    with open(path, "r") as f:
+        svg_content = f.read()
+
+    if ls is not None:
+        svg_content = svg_content.replace("@litres", str(ls))
+    if mps is not None:
+        svg_content = svg_content.replace("@missed_pens", str(mps))
+    if rcs is not None:
+        svg_content = svg_content.replace("@red_cards", str(rcs))
+    if ogs is not None:
+        svg_content = svg_content.replace("@own_goals", str(ogs))
+    if nms is not None:
+        svg_content = svg_content.replace("@nominations", str(nms))
+
+    b64_svg = base64.b64encode(svg_content.encode('utf-8')).decode("utf-8")
+
+    style = ""
+    if width is not None:
+        style += f"width: {width}%;"
+    if height is not None:
+        style += f"height: {height}%;"
+        
+    img_tag = f'<img src="data:image/svg+xml;base64,{b64_svg}" style="{style}"/>'
+    
+    st.write(img_tag, unsafe_allow_html=True)
+    st.markdown(" #####")
+
 #build drinks display table
 @st.cache_data(ttl='6h', max_entries = 1,)
 def build_drinks_display(drinks, current_week):
@@ -247,6 +276,7 @@ def fetch_uno_data(_gc, sheet_name, sheet_key, columns_list):
     except Exception as e:
         print("An error occurred:", e)
         return None
+
 
 
 # function to return season metrics
@@ -487,6 +517,23 @@ def build_laps(df):
 def time_since_last_update():
     time_plus_6_hours = datetime.now() + timedelta(hours=6)
     return time_plus_6_hours
+
+@st.cache_data(ttl='6h',max_entries=1)
+def analyze_drinks(df):
+    # Calculate the sum of the drink_size column
+    total_drink_size = f"{df['drink_size'].sum()/1000:.2f}"
+
+    # Count occurrences of specific drink types
+    drink_type_counts = df['drink_type'].value_counts()
+
+    # Get counts for specific drink types
+    missed_pen_count = drink_type_counts.get('missed pen', 0)
+    red_card_count = drink_type_counts.get('red card', 0)
+    own_goal_count = drink_type_counts.get('own goal', 0)
+    nomination_count = drink_type_counts.get('nomination', 0)
+
+    return total_drink_size, missed_pen_count, red_card_count, own_goal_count, nomination_count
+
 #'''------------------------------------------------------------REGULAR FUNCTIONS------------------------------------------------------------'''
 def fetch_google_sheets_data(gc, sheet_name, sheet_key, columns_list):
     try:
@@ -909,3 +956,51 @@ def format_date(date_str):
             return date_obj.strftime('%d %b')
         except ValueError:
             return "Not Completed"
+        
+def needs_new_uno(df, last_place):
+    # Check if there's a match in player_name and uno_reverse is "No"
+    match_condition = (df['player_name'] == last_place) & (df['uno_reverse'] == 'No')
+    
+    # Check if any row satisfies the condition
+    if any(match_condition):
+        return True
+    else:
+        return False
+
+
+def give_new_uno(gc, sheet_key, uno_data, last_place):
+    """
+    Update the 'uno_reverse' value in the Google Sheet based on the last place player.
+    
+    Args:
+        gc (gspread.Client): Google Sheets API client.
+        sheet_key (str): Google Sheet key.
+        uno_data (pandas.DataFrame): DataFrame containing Uno data.
+        last_place (str): Player name in last place.
+    """
+    try:
+        # Filter and update uno_data
+        filtered_uno_data = uno_data[uno_data["player_name"] == last_place]
+        if not filtered_uno_data.empty:
+            uno_index = filtered_uno_data.index[0]
+            uno_data.at[uno_index, 'uno_reverse'] = 'Yes'
+        else:
+            print(f"Player '{last_place}' not found in Uno data.")
+            return
+
+        # Open specific sheet
+        gs = gc.open_by_key(sheet_key)
+
+        # Open specific tabs within the sheet
+        drinks_tab = gs.worksheet("drinks")
+        uno_tab = gs.worksheet("managers")
+
+        # Update the Google Sheet with the modified uno_data DataFrame
+        set_with_dataframe(uno_tab, uno_data)
+
+    except gspread.exceptions.APIError as e:
+        print("Error accessing Google Sheets API:", e)
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"Error: Worksheet not found, please create a new tab named:", e)
+    except Exception as e:
+        print("An error occurred:", e)

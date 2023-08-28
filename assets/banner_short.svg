@@ -75,10 +75,10 @@
         <path class="cls-1" d="m406.29,508.4v203.57h-38.36v-158.49l-24.78,9.38v-40.74l30.38-13.72h32.76Z"/>
       </g>
     </g>
-        <g transform="translate(1700, 460)"> <!-- Adjust the translation values as needed -->
+      <g transform="translate(1700, 460)"> <!-- Adjust the translation values as needed -->
         <text x="0" y="0" font-family="Arial" font-size="100" font-weight="bold" fill="#c62828" text-anchor="middle">GAME WEEK @gw_number WINNER</text>
         <text x="0" y="150" font-family="Arial" font-size="150" font-weight="bold" fill="black" text-anchor="middle">@first_place_name</text>
         <text x="0" y="260" font-family="Arial" font-size="100" font-weight="bold" fill="black" text-anchor="middle">@team_name</text>
-    </g>
+      </g>
   </g>
 </svg>
