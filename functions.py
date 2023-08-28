@@ -606,9 +606,9 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
             (df["drinker_name"] == nominee)
             & (df["nomination_completed_date"] == "Not Completed")
         ]
-        last_record_index = filtered_df.index[-1]
-        df.at[last_record_index, "nomination_completed_date"] = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M")
-        df.at[last_record_index, "drink_size"] = drink_size
+        first_record_index = filtered_df.index[0]  # Get the index of the first record
+        df.at[first_record_index, "nomination_completed_date"] = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M")
+        df.at[first_record_index, "drink_size"] = drink_size
     except IndexError as e:
         r = "You dont have any outstanding drinks"
         return r
