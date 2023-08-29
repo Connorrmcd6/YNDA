@@ -142,12 +142,8 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
             else:
                 with st.spinner(text="Submitting..."):
-                    created_date = (datetime.now() + timedelta(hours=2)).strftime(
-                        "%d/%m/%y %H:%M:%S"
-                    )
-                    deadline_date = (
-                        datetime.now() + timedelta(hours=2) + timedelta(days=7)
-                    ).strftime("%d/%m/%y")
+                    created_date = int(time.time()) + (60*60*2) # add two hours to adjust for server time
+                    deadline_date = created_date + (7 * 24 * 60 * 60) + (60*60*2)
 
                     data = {
                         "event": [current_week],
@@ -201,12 +197,8 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
                         managers_temp.remove(last_place)
 
                     random_nominees = sample(managers_temp, random_choice_amount)
-                    created_date = (datetime.now() + timedelta(hours=2)).strftime(
-                        "%d/%m/%y %H:%M:%S"
-                    )
-                    deadline_date = (
-                        datetime.now() + timedelta(hours=2) + timedelta(days=7)
-                    ).strftime("%d/%m/%y %H:00")
+                    created_date = int(time.time()) + (60*60*2) # add two hours to adjust for server time
+                    deadline_date = created_date + (7 * 24 * 60 * 60) + (60*60*2)
 
                     data = {
                         "event": [current_week]*random_choice_amount,

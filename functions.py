@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
 from random import sample
+import time
 from gspread_dataframe import set_with_dataframe
 import gspread
 from google.oauth2 import service_account
@@ -483,8 +484,9 @@ def build_laps(df):
                           'start_time', 'end_time', 'drink_size']].dropna()
     
     # Convert date columns to datetime objects
-    drinks_lap_times["nomination_completed_date"] = pd.to_datetime(drinks_lap_times["nomination_completed_date"], errors="coerce")
-    drinks_lap_times["nomination_deadline_date"] = pd.to_datetime(drinks_lap_times["nomination_deadline_date"], errors="coerce")
+    drinks_lap_times["nomination_completed_date"] = drinks_lap_times["nomination_completed_date"].apply(lambda x: format_date(x))
+    drinks_lap_times["nomination_deadline_date"] = drinks_lap_times["nomination_deadline_date"].apply(lambda x: format_date(x))
+
 
     # Filter rows with valid nomination completion date
     drinks_lap_times = drinks_lap_times[drinks_lap_times['nomination_completed_date'] < drinks_lap_times['nomination_deadline_date']]
@@ -604,6 +606,7 @@ def select_box_validator(input):
     else:
         return True
 
+
 def submit_drink(_gc, df, sheet_key, nominee, drink_size):
     try:
         filtered_df = df[
@@ -611,7 +614,10 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
             & (df["nomination_completed_date"] == "Not Completed")
         ]
         first_record_index = filtered_df.index[0]  # Get the index of the first record
-        df.at[first_record_index, "nomination_completed_date"] = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M")
+        
+        # Use Unix time (seconds since epoch) instead of formatted time
+        now_unix = int(time.time()) + 2 * 3600  # Adding 2 hours in seconds
+        df.at[first_record_index, "nomination_completed_date"] = now_unix
         df.at[first_record_index, "drink_size"] = drink_size
     except IndexError as e:
         r = "You dont have any outstanding drinks"
@@ -643,10 +649,11 @@ def categories(df):
     df["quantity"] = 1
     df = df.iloc[:, [2, 5, 6, 7]]
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
-    
-    # Convert date columns to datetime objects
-    df["nomination_completed_date"] = pd.to_datetime(df["nomination_completed_date"], errors="coerce")
-    df["nomination_deadline_date"] = pd.to_datetime(df["nomination_deadline_date"], errors="coerce")
+
+
+
+    df['nomination_completed_date'] = df['nomination_completed_date'].apply(lambda x: create_unix(x))
+    df['nomination_deadline_date'] = df['nomination_deadline_date'].apply(lambda x: create_unix(x))
 
     # Initialize an empty list to store the categories
     categories = []
@@ -655,7 +662,7 @@ def categories(df):
         completed_date = row["nomination_completed_date"]
         deadline_date = row["nomination_deadline_date"]
 
-        if pd.isnull(completed_date):
+        if completed_date == "Not Completed":
             categories.append("Outstanding")
         elif completed_date <= deadline_date:
             categories.append("Completed")
@@ -705,9 +712,12 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
             raise Exception("You have already used your uno reverse card this season")
 
         # Convert "nomination_created_date" to a datetime object for comparison
-        nomination_created_datetime = datetime.strptime(filtered_drinks.nomination_created_date.iloc[0], "%d/%m/%y %H:%M:%S")
+        nomination_created_datetime = int(filtered_drinks.nomination_created_date.iloc[0])
 
-        if (datetime.now() + timedelta(hours=2)) > (nomination_created_datetime + timedelta(days=2)):
+        current_timestamp = int(time.time()) + 2*60*60 #adjust for sever time
+        two_days_in_seconds = 2 * 24 * 60 * 60  # 2 days in seconds
+
+        if current_timestamp > (nomination_created_datetime + two_days_in_seconds):
             raise Exception("You took more than 2 days to use your uno reverse card, try again next time")
         else: 
             # Use a single equal sign (=) for assignment
@@ -902,8 +912,13 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
     filtered_teams = gameweek_teams_table_df[gameweek_teams_table_df["event"] == current_gw]
 
     lowest_points_player = filtered_results.sort_values(by=['points', 'total_points', 'player_name']).iloc[0]['player_name']
-    created_date = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M:%S")
-    deadline_date = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%y %23:59")
+    created_date = int(time.time()) + (60*60*2) # add two hours to adjust for server time
+
+    deadline_date_str = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%y %23:59:59")
+    parsed_datetime = datetime.strptime(deadline_date_str, "%d/%m/%y %H:%M:%S")
+    deadline_date = parsed_datetime.timestamp()
+
+
 
     # Get player names with red cards, own goals, and missed penalties
     red_card_players = get_players_by_condition(filtered_teams, 'red_card')
@@ -965,14 +980,26 @@ def can_nominate_flag(df, current_gw, first_place):
 
 def format_date(date_str):
     try:
-        date_obj = datetime.strptime(date_str, '%d/%m/%y %H:%M')
+        timestamp = int(date_str)  # Assuming date_str is a Unix timestamp in string format
+        date_obj = datetime.fromtimestamp(timestamp)
         return date_obj.strftime('%d %b')
     except ValueError:
         try:
-            date_obj = datetime.strptime(date_str, '%d/%m/%y')
+            date_obj = datetime.strptime(date_str, '%d/%m/%y %H:%M')
             return date_obj.strftime('%d %b')
         except ValueError:
-            return "Not Completed"
+            try:
+                date_obj = datetime.strptime(date_str, '%d/%m/%y')
+                return date_obj.strftime('%d %b')
+            except ValueError:
+                return "Not Completed"
+
+def create_unix(date_str):
+    try:
+        timestamp = int(date_str)
+        return timestamp
+    except ValueError:
+        return "Not Completed"
         
 def needs_new_uno(df, last_place):
     # Check if there's a match in player_name and uno_reverse is "No"
