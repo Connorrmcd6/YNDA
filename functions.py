@@ -484,8 +484,8 @@ def build_laps(df):
                           'start_time', 'end_time', 'drink_size']].dropna()
     
     # Convert date columns to datetime objects
-    drinks_lap_times["nomination_completed_date"] = drinks_lap_times["nomination_completed_date"].apply(lambda x: format_date(x))
-    drinks_lap_times["nomination_deadline_date"] = drinks_lap_times["nomination_deadline_date"].apply(lambda x: format_date(x))
+    drinks_lap_times["nomination_completed_date"] = drinks_lap_times["nomination_completed_date"].apply(lambda x: create_unix(x))
+    drinks_lap_times["nomination_deadline_date"] = drinks_lap_times["nomination_deadline_date"].apply(lambda x: create_unix(x))
 
 
     # Filter rows with valid nomination completion date
