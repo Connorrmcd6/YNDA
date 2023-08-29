@@ -634,23 +634,36 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
         print("An error occurred:", e)
         return None
 
+
 def categories(df):
     df["quantity"] = 1
     df = df.iloc[:, [2, 5, 6, 7]]
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
-    # Define the conditions for the new column
-    condition1 = df["nomination_completed_date"] <= df["nomination_deadline_date"]
-    condition2 = df["nomination_completed_date"] > df["nomination_deadline_date"]
-    condition3 = df["nomination_completed_date"] == "Not Completed"
+    
+    # Convert date columns to datetime objects
+    df["nomination_completed_date"] = pd.to_datetime(df["nomination_completed_date"], errors="coerce")
+    df["nomination_deadline_date"] = pd.to_datetime(df["nomination_deadline_date"], errors="coerce")
 
-    # Apply the conditions and create the new column
-    # Set a default value if no conditions are met
-    df["Category"] = "Default Value"
-    df.loc[condition1, "Category"] = "Completed"
-    df.loc[condition2, "Category"] = "Late"
-    df.loc[condition3, "Category"] = "Outstanding"
+    # Initialize an empty list to store the categories
+    categories = []
+
+    for index, row in df.iterrows():
+        completed_date = row["nomination_completed_date"]
+        deadline_date = row["nomination_deadline_date"]
+
+        if pd.isnull(completed_date):
+            categories.append("Outstanding")
+        elif completed_date <= deadline_date:
+            categories.append("Completed")
+        else:
+            categories.append("Late")
+
+    # Add the categories list as a new column in the DataFrame
+    df["Category"] = categories
 
     return df
+
+
 
 def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
     try:
@@ -886,7 +899,7 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
 
     lowest_points_player = filtered_results.sort_values(by=['points', 'total_points', 'player_name']).iloc[0]['player_name']
     created_date = (datetime.now() + timedelta(hours=2)).strftime("%d/%m/%y %H:%M:%S")
-    deadline_date = (datetime.now() + timedelta(hours=2) + timedelta(days=7)).strftime("%d/%m/%y %H:00")
+    deadline_date = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%y %23:59")
 
     # Get player names with red cards, own goals, and missed penalties
     red_card_players = get_players_by_condition(filtered_teams, 'red_card')

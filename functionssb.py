@@ -505,17 +505,27 @@ def categories(df):
     df["quantity"] = 1
     df = df.iloc[:, [2, 5, 6, 7]]
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
-    # Define the conditions for the new column
-    condition1 = df["nomination_completed_date"] <= df["nomination_deadline_date"]
-    condition2 = df["nomination_completed_date"] > df["nomination_deadline_date"]
-    condition3 = df["nomination_completed_date"] == "Not Completed"
+    
+    # Convert date columns to datetime objects
+    df["nomination_completed_date"] = pd.to_datetime(df["nomination_completed_date"], errors="coerce")
+    df["nomination_deadline_date"] = pd.to_datetime(df["nomination_deadline_date"], errors="coerce")
 
-    # Apply the conditions and create the new column
-    # Set a default value if no conditions are met
-    df["Category"] = "Default Value"
-    df.loc[condition1, "Category"] = "Completed"
-    df.loc[condition2, "Category"] = "Late"
-    df.loc[condition3, "Category"] = "Outstanding"
+    # Initialize an empty list to store the categories
+    categories = []
+
+    for index, row in df.iterrows():
+        completed_date = row["nomination_completed_date"]
+        deadline_date = row["nomination_deadline_date"]
+
+        if pd.isnull(completed_date):
+            categories.append("Outstanding")
+        elif completed_date <= deadline_date:
+            categories.append("Completed")
+        else:
+            categories.append("Late")
+
+    # Add the categories list as a new column in the DataFrame
+    df["Category"] = categories
 
     return df
 
