@@ -481,6 +481,10 @@ def build_laps(df):
     # Filter rows with relevant columns and non-null values
     drinks_lap_times = df[['drinker_name', 'nomination_completed_date', 'nomination_deadline_date', 
                           'start_time', 'end_time', 'drink_size']].dropna()
+    
+    # Convert date columns to datetime objects
+    drinks_lap_times["nomination_completed_date"] = pd.to_datetime(drinks_lap_times["nomination_completed_date"], errors="coerce")
+    drinks_lap_times["nomination_deadline_date"] = pd.to_datetime(drinks_lap_times["nomination_deadline_date"], errors="coerce")
 
     # Filter rows with valid nomination completion date
     drinks_lap_times = drinks_lap_times[drinks_lap_times['nomination_completed_date'] < drinks_lap_times['nomination_deadline_date']]
