@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
+import json
 from datetime import datetime, timedelta
 from random import sample
 import time
@@ -151,7 +152,7 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
         print("An error occurred:", e)
         return None
 
-@st.cache_data(ttl='6h', max_entries = 1,)
+# @st.cache_data(ttl='6h', max_entries = 1,)
 def render_svg_summary(path, width=None, height=None, ls=None, mps=None, rcs=None, ogs=None, nms=None):
     with open(path, "r") as f:
         svg_content = f.read()
@@ -503,6 +504,7 @@ def build_laps(df):
     # Compute the gap from the fastest time
     fastest_time = fastest_times_df['completion_time'].min()
     fastest_times_df['gap'] = fastest_times_df['completion_time'] - fastest_time
+    
     fastest_times_df['gap'] = fastest_times_df['gap'].apply(lambda x: f"+{x:.3f}s" if pd.notna(x) and x != 0 else '')
 
     # Sort by completion_time

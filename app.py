@@ -106,7 +106,7 @@ rank_df = build_rank_df(gameweek_df, current_week)
 #'''------------------------------------------------------------SIDE BAR------------------------------------------------------------'''
 
 with st.sidebar:
-    render_logo("assets/logo.svg")
+    render_logo("assets/static/logo.svg")
 
 with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
@@ -271,7 +271,7 @@ with st.sidebar.expander("🍺 Submit a Drink?", expanded=False):
 
 # '''------------------------------------------------------------APP------------------------------------------------------------'''
 
-drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
+drinks_tab, stats_tab, awards_tab, rules_tab= st.tabs(
     ["Drinks", "Stats", "Awards", "Info"]
 )
 
@@ -280,11 +280,11 @@ drinks_tab, stats_tab, awards_tab, rules_tab = st.tabs(
 with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
     
     if current_gw > 0 and finished and checked:
-        render_svg_banner("assets/banner_short.svg", width=100, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
+        render_svg_banner("assets/static/first_place_banner.svg", width=100, height=50, gw_number=current_gw, first_place_name=first_place, team_name=first_team_name)
 
     elif current_gw > 0 and (not finished or not checked):
         first_place, last_place, first_team_name = get_previous_first_last(gameweek_df, current_gw)
-        render_svg_banner("assets/banner_short.svg", width=100, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
+        render_svg_banner("assets/static/first_place_banner.svg", width=100, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
 
     drinks_toggle = tog.st_toggle_switch(label=False, 
                 key="Key1", 
@@ -307,8 +307,7 @@ with drinks_tab.expander("🔁 Uno Reverse Cards", expanded= False):
 
 
 with stats_tab:
-    render_svg_summary("assets/summary_banner.svg", width=None, height=None, ls=litres, mps=missed_pen_count, rcs=red_card_count, ogs=own_goal_count, nms=nomination_count)
-
+    render_svg_summary("assets/static/summary_stats.svg", width=None, height=None, ls=litres, mps=missed_pen_count, rcs=red_card_count, ogs=own_goal_count, nms=nomination_count)
 
 
 with stats_tab.expander("📊     Total Drinks", expanded= True):
@@ -376,15 +375,15 @@ with awards_tab:
 
 
     with col1:
-        render_svg_metric("assets/golden_boot.svg", width=None, height=None, name=most_1st_place_player, metric_name="Golden Boot", value_str=f"{most_1st_place_count} first place finishes")
-        render_svg_metric("assets/warrior.svg", width=None, height=None, name=most_last_place_player, metric_name="Relegation Warrior", value_str=f"{most_last_place_count} last place finishes")
-        render_svg_metric("assets/bench.svg", width=None, height=None, name=player_with_highest_points_on_bench, metric_name="Warmest Bench" , value_str=f"{player_with_highest_points_on_bench_count} points on bench")
+        render_svg_metric("assets/static/golden_boot.svg", width=None, height=None, name=most_1st_place_player, metric_name="Golden Boot", value_str=f"{most_1st_place_count} first place finishes")
+        render_svg_metric("assets/static/warrior.svg", width=None, height=None, name=most_last_place_player, metric_name="Relegation Warrior", value_str=f"{most_last_place_count} last place finishes")
+        render_svg_metric("assets/static/bench.svg", width=None, height=None, name=player_with_highest_points_on_bench, metric_name="Warmest Bench" , value_str=f"{player_with_highest_points_on_bench_count} points on bench")
 
 
     with col2: 
-        render_svg_metric("assets/big_hitter.svg", width=None, height=None, name=player_with_highest_cost, metric_name="Big Hitter", value_str=f"{player_with_highest_cost_count/4:.0f} hits taken" )
-        render_svg_metric("assets/heavyweight.svg", width=None, height=None, name=most_litres_name, metric_name="Heavy Weight", value_str=f"{most_litres_qty}ℓ of beer consumed")
-        render_svg_metric("assets/wooden_boot.svg", width=None, height=None, name=lowest_score_player_name, metric_name="Wooden Boot", value_str=f"{lowest_score_points} points in game week {lowest_score_event}")
+        render_svg_metric("assets/static/big_hitter.svg", width=None, height=None, name=player_with_highest_cost, metric_name="Big Hitter", value_str=f"{player_with_highest_cost_count/4:.0f} hits taken" )
+        render_svg_metric("assets/static/heavyweight.svg", width=None, height=None, name=most_litres_name, metric_name="Heavy Weight", value_str=f"{most_litres_qty}ℓ of beer consumed")
+        render_svg_metric("assets/static/wooden_boot.svg", width=None, height=None, name=lowest_score_player_name, metric_name="Wooden Boot", value_str=f"{lowest_score_points} points in game week {lowest_score_event}")
 
 with rules_tab.expander("✏️ Rules", expanded= False):
     st.markdown(
@@ -393,7 +392,7 @@ with rules_tab.expander("✏️ Rules", expanded= False):
                 2. Last place for each week will be assigned a drink.
                 3. If you have a player with a red card, own goal, or missed penalty in your :red[**final 11**], you will be assigned a drink.
                 4. If you want to be included on the lap times leaderboard you will need to have a stop watch visibile in your video submission.
-                5. Everyone gets one Uno reverse card per season. You can use this to give your drink back to the person that nominated you. As long as you do it within 2 days of nomination.
+                5. Everyone gets one Uno reverse card per season. You can use this to give your drink back to the person that nominated you. As long as you do it within 2 days of nomination. You will gain an additional uno reverse if you come last. Uno reverse cards don't stack up, you can only have one at a time
                 6. You can't Uno reverse someone else's Uno reverse.    
                 """
     )
@@ -424,7 +423,7 @@ with rules_tab.expander("🤷🏻‍♂️ How to Nominate Submit a Drink or Uno
                 3. Fill out your name.
                 4. Click on the `Uno` button.
                 """)
-with rules_tab.expander("⏱️ Next Refresh", expanded= False):
+with rules_tab.expander("⏱️ Next Refresh", expanded= True):
     st.markdown(f"Data will be refreshed in: **{time_to_update}**", help="If you have submitted a drink or nominated someone and it hasn't shown up on the app it will be added when the data is next refreshed")
 
     if st.button('Manual Refresh'):
@@ -439,5 +438,8 @@ with rules_tab.expander("⏱️ Next Refresh", expanded= False):
         st.experimental_rerun()
 
     st.code(f'status:\ngame week finished: {finished}\ngame week data checked: {checked}')
+
+
+
 end = time.time()
 print(end - start)
