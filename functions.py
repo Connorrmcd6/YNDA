@@ -152,7 +152,7 @@ def fetch_drinks_data(_gc, sheet_name, sheet_key, columns_list):
         print("An error occurred:", e)
         return None
 
-# @st.cache_data(ttl='6h', max_entries = 1,)
+@st.cache_data(ttl='6h', max_entries = 1,)
 def render_svg_summary(path, width=None, height=None, ls=None, mps=None, rcs=None, ogs=None, nms=None):
     with open(path, "r") as f:
         svg_content = f.read()
