@@ -286,11 +286,11 @@ with drinks_tab.expander("🍺 Latest Drinks", expanded= True):
         first_place, last_place, first_team_name = get_previous_first_last(gameweek_df, current_gw)
         render_svg_banner("assets/static/first_place_banner.svg", width=100, height=50, gw_number=(current_gw-1), first_place_name=first_place, team_name=first_team_name)
 
-    drinks_toggle = tog.st_toggle_switch(label=False, 
+    drinks_toggle = tog.st_toggle_switch(label='See Drinks Details', 
                 key="Key1", 
                 default_value=False, 
                 label_after = False, 
-                inactive_color = '#D3D3D3', 
+                inactive_color = '#69db67', 
                 active_color="#984249", 
                 track_color="#ff4c4b"
                 )

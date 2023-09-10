@@ -204,11 +204,12 @@ def build_drinks_display_expanded(drinks):
     drinks_display = drinks
     drinks_display['formatted_deadline_date'] = drinks_display['nomination_deadline_date'].apply(lambda x: format_date(x))
     drinks_display['formatted_completed_date'] = drinks_display['nomination_completed_date'].apply(lambda x: format_date(x))
-    drinks_display = drinks.iloc[:, [0, 2, 3, 11, 12]]
+    drinks_display = drinks.iloc[:, [0, 1, 2, 3, 11, 12]]
     drinks_display.rename(
         columns={
             "event": "Game Week",
-            "drinker_name": "Name",
+            "nominator_name": "Nominator",
+            "drinker_name": "Drinker",
             "drink_type": "Drink Type",
             "formatted_deadline_date": "Deadline",
             "formatted_completed_date": "Completed Date",
@@ -919,8 +920,6 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
     deadline_date_str = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%y %23:59:59")
     parsed_datetime = datetime.strptime(deadline_date_str, "%d/%m/%y %H:%M:%S")
     deadline_date = parsed_datetime.timestamp()
-
-
 
     # Get player names with red cards, own goals, and missed penalties
     red_card_players = get_players_by_condition(filtered_teams, 'red_card')
