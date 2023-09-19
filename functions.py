@@ -432,13 +432,37 @@ def get_illegible_nominees(df, current_gw):
     missed_pen_players = df[(df['event'] == current_gw) & (df['drink_type'] == 'missed pen')]['drinker_name'].tolist()
     return red_card_players, own_goal_players, missed_pen_players
 
-@st.cache_data(max_entries = 1,)
-def get_first_last(df, current_gw):
+# @st.cache_data(max_entries = 1,)
+# def get_first_last(df, current_gw):
+#     # Filter the DataFrame for the given current_gw
+#     current_gw_df = df[df['event'] == current_gw]
+
+#     if len(current_gw_df) == 0:
+#         return None, None, None  # gw not finished
+
+#     # Sort the filtered DataFrame based on points, total_points, and player_name
+#     sorted_df = current_gw_df.sort_values(by=["points", "total_points", "player_name"],
+#                                           ascending=[False, False, True])
+
+#     # Get the player names of the first and last place
+#     first_place_name = sorted_df.iloc[0].player_name
+#     last_place_name = sorted_df.iloc[-1].player_name
+#     first_team_name = sorted_df.iloc[0].entry_name
+
+#     return first_place_name, last_place_name,first_team_name
+
+@st.cache_data(max_entries=1)
+def get_first_last(df, current_gw, drinks=None):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw]
 
+    not_completed_df = drinks[drinks['nomination_completed_date'] == 'Not Completed']['drinker_name']
+
     if len(current_gw_df) == 0:
         return None, None, None  # gw not finished
+
+    # Exclude names from not_completed_df from current_gw_df
+    current_gw_df = current_gw_df[~current_gw_df['player_name'].isin(not_completed_df)]
 
     # Sort the filtered DataFrame based on points, total_points, and player_name
     sorted_df = current_gw_df.sort_values(by=["points", "total_points", "player_name"],
@@ -449,7 +473,7 @@ def get_first_last(df, current_gw):
     last_place_name = sorted_df.iloc[-1].player_name
     first_team_name = sorted_df.iloc[0].entry_name
 
-    return first_place_name, last_place_name,first_team_name
+    return first_place_name, last_place_name, first_team_name
 
 @st.cache_data(max_entries = 1,)
 def get_previous_first_last(df, current_gw):

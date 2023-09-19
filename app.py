@@ -59,7 +59,7 @@ drinks_display_expanded = build_drinks_display_expanded(drinks)
 drinks_display_expanded.index = np.arange(1, len(drinks_display_expanded) + 1)
 
 litres, missed_pen_count, red_card_count, own_goal_count, nomination_count = analyze_drinks(drinks)
-first_place, last_place, first_team_name = get_first_last(gameweek_df, current_gw)
+first_place, last_place, first_team_name = get_first_last(gameweek_df, current_gw, drinks)
 red_cards, own_goals, missed_pen = get_illegible_nominees(drinks, current_gw)
 
 #this has a cache reset every 6 hours because it can change during the week
