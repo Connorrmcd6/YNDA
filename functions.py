@@ -438,7 +438,7 @@ def get_first_last(df, current_gw, drinks=None):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw]
 
-    not_completed_df = drinks[drinks['nomination_completed_date'] == 'Not Completed']['drinker_name']
+    not_completed_df = drinks[(drinks['nomination_completed_date'] == 'Not Completed') & (drinks['event'] < current_gw)]['drinker_name']
 
     if len(current_gw_df) == 0:
         return None, None, None  # gw not finished
@@ -462,7 +462,7 @@ def get_previous_first_last(df, current_gw, drinks=None):
     # Filter the DataFrame for the given current_gw
     current_gw_df = df[df['event'] == current_gw-1]
 
-    not_completed_df = drinks[drinks['nomination_completed_date'] == 'Not Completed']['drinker_name']
+    not_completed_df = drinks[(drinks['nomination_completed_date'] == 'Not Completed') & (drinks['event'] < current_gw)]['drinker_name']
 
     if len(current_gw_df) == 0:
         return None, None, None  # gw not finished
