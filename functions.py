@@ -928,8 +928,8 @@ def auto_assign_drinks(_gc, gameweek_results_table, gameweek_teams_table, prod_g
     lowest_points_player = filtered_results.sort_values(by=['points', 'total_points', 'player_name']).iloc[0]['player_name']
     created_date = int(time.time()) + (60*60*2) # add two hours to adjust for server time
 
-    deadline_date_str = (datetime.now() + timedelta(days=7)).strftime("%d/%m/%y %23:59:59")
-    parsed_datetime = datetime.strptime(deadline_date_str, "%d/%m/%y %H:%M:%S")
+    deadline_date_str = (datetime.now() + timedelta(days=7)).strftime("%m/%d/%y %23:59:59")
+    parsed_datetime = datetime.strptime(deadline_date_str, "%m/%d/%y %H:%M:%S")
     deadline_date = parsed_datetime.timestamp()
 
     # Get player names with red cards, own goals, and missed penalties
