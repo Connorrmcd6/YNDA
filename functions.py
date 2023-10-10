@@ -698,6 +698,8 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
             & (drinks["nomination_completed_date"] == "Not Completed")
             & (drinks["drink_type"] == "nomination")
         ]
+        # Sort the DataFrame by "nomination_created_date"
+        filtered_drinks = filtered_drinks.sort_values(by="nomination_created_date", ascending=True)
         
         if filtered_drinks.empty:
             return "You don't have any valid drinks to reverese"
@@ -726,13 +728,13 @@ def uno_reverse(gc, drinks, uno_data, sheet_key, nominee):
             raise Exception("You have already used your uno reverse card this season")
 
         # Convert "nomination_created_date" to a datetime object for comparison
-        nomination_created_datetime = int(filtered_drinks.nomination_created_date.iloc[0])
+        nomination_created_datetime = int(filtered_drinks.nomination_created_date.iloc[-1])
 
         current_timestamp = int(time.time()) + 2*60*60 #adjust for sever time
         two_days_in_seconds = 2 * 24 * 60 * 60  # 2 days in seconds
 
         if current_timestamp > (nomination_created_datetime + two_days_in_seconds):
-            raise Exception("You took more than 2 days to use your uno reverse card, try again next time")
+            raise Exception(f"You took more than 2 days to use your uno reverse card, try again next time{current_timestamp}; {(nomination_created_datetime + two_days_in_seconds)}")
         else: 
             # Use a single equal sign (=) for assignment
             uno_data.at[uno_index, 'uno_reverse'] = 'No'
