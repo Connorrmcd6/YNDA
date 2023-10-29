@@ -46,8 +46,17 @@ gameweek_df = fetch_gameweek_data(
     
 
 #make this cache indefintely and reset on update
-managers = sorted(fetch_manager_data(gs_connection, managers_table, prod_google_sheet_key, [])["player_name"])
+all_managers = fetch_manager_data(gs_connection, managers_table, prod_google_sheet_key, [])
+
+# Filter active managers and sort their player names
+active_managers = all_managers[all_managers.active == 'Yes']["player_name"].tolist()
+active_managers.insert(0, "")
+active_managers.sort()
+
+# Sort all managers' player names
+managers = all_managers["player_name"].tolist()
 managers.insert(0, "")
+managers.sort()
 
 
 #this has a cache reset every 6 hours because people can nominate or uno reverse and the change should be reflected
@@ -110,9 +119,9 @@ with st.sidebar:
 
 with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
-    nominator = st.selectbox(label="Your Name", options=managers, key="nominate_name")
+    nominator = st.selectbox(label="Your Name", options=active_managers, key="nominate_name")
 
-    nominee = st.selectbox("Nominate", managers)
+    nominee = st.selectbox("Nominate", active_managers)
 
     if st.button(label="Submit", key="nominate_submit"):
         if nominate_flag == True:
@@ -175,7 +184,7 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
                 with st.spinner(text="Picking..."):
 
                     # remove "" and remove last_place
-                    managers_temp = managers[:]
+                    managers_temp = active_managers[:]
                     managers_temp.remove("")
                     managers_temp.remove(last_place)
 
@@ -192,7 +201,7 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
 
                     #incase halaand misses another pen and no one can nominate
                     if len(managers_temp) <= 3:
-                        managers_temp = managers[:]
+                        managers_temp = active_managers[:]
                         managers_temp.remove("")
                         managers_temp.remove(last_place)
 
