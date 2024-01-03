@@ -550,7 +550,9 @@ def get_first_last(df, current_gw, drinks=None):
     if len(current_gw_df) == 0:
         return None, None, None  # GW not finished
 
-    current_gw_df = current_gw_df[~current_gw_df["player_name"].isin(not_completed_df)]
+    current_gw_df = current_gw_df[
+        ~current_gw_df["player_name"].isin(not_completed_df["drinker_name"])
+    ]
 
     if len(current_gw_df) == 0:
         return None, None, None  # No valid entries after exclusion
