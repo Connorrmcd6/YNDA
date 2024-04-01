@@ -5,8 +5,8 @@ general_endpoint = "https://fantasy.premierleague.com/api/bootstrap-static/"
 league_endpoint = (f"https://fantasy.premierleague.com/api/leagues-classic/{league_id}/standings")
 
 # sheet names
-gameweek_results_table = "gameweek_results_1"
-gameweek_teams_table = "gameweek_teams_1"
+gameweek_results_table = "gameweek_results_2"
+gameweek_teams_table = "gameweek_teams_2"
 managers_table = "managers"
 drinks_table = "drinks"
 
