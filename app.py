@@ -205,9 +205,7 @@ with st.sidebar.expander("🎖️ Nominate Someone?", expanded=False):
                         managers_temp.remove("")
                         managers_temp.remove(last_place)
 
-                    # random_nominees = sample(managers_temp, random_choice_amount)
-                    random_nominees = ["Alex Wietzorrek", "Cole Floyd", "Alex Wietzorrek", "Cole Floyd"]
-                    random_choice_amount = 4
+                    random_nominees = sample(managers_temp, random_choice_amount)
                     created_date = int(time.time()) + (60*60*2) # add two hours to adjust for server time
                     deadline_date = created_date + (7 * 24 * 60 * 60) + (60*60*2)
 
