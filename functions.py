@@ -8,8 +8,8 @@ import time
 from gspread_dataframe import set_with_dataframe
 import gspread
 from google.oauth2 import service_account
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+# from pydrive.auth import GoogleAuth
+# from pydrive.drive import GoogleDrive
 import matplotlib.pyplot as plt
 import altair as alt
 import base64
