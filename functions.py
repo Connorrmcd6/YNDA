@@ -233,14 +233,21 @@ def build_drinks_display(drinks, current_week):
     max_entries=1,
 )
 def build_drinks_display_expanded(drinks):
-    drinks_display = drinks
+    # Create a copy of the DataFrame to avoid modifying the original DataFrame
+    drinks_display = drinks.copy()
+    
+    # Apply formatting functions
     drinks_display["formatted_deadline_date"] = drinks_display[
         "nomination_deadline_date"
     ].apply(lambda x: format_date(x))
     drinks_display["formatted_completed_date"] = drinks_display[
         "nomination_completed_date"
     ].apply(lambda x: format_date(x))
-    drinks_display = drinks.iloc[:, [0, 1, 2, 3, 11, 12]]
+    
+    # Select the required columns
+    drinks_display = drinks_display.iloc[:, [0, 1, 2, 3, 11, 12]].copy()
+    
+    # Rename the columns
     drinks_display.rename(
         columns={
             "event": "Game Week",
@@ -252,6 +259,7 @@ def build_drinks_display_expanded(drinks):
         },
         inplace=True,
     )
+    
     return drinks_display
 
 
@@ -458,7 +466,7 @@ def update(_gc):
         gw = 0
         return False, gw, False, False
 
-    gw = int(events[events["is_current"] == True]["id"])
+    gw = int(events[events["is_current"] == True]["id"].iloc[0])
     finished = bool(events[events["is_current"] == True]["finished"].values)
     data_checked = bool(events[events["is_current"] == True]["data_checked"].values)
 
@@ -822,7 +830,7 @@ def submit_drink(_gc, df, sheet_key, nominee, drink_size):
 
 def categories(df):
     df["quantity"] = 1
-    df = df.iloc[:, [2, 5, 6, 7]]
+    df = df.iloc[:, [2, 5, 6, 7]].copy()  # Ensure we are working with a copy
     df.rename(columns={"drinker_name": "Name"}, inplace=True)
 
     df["nomination_completed_date"] = df["nomination_completed_date"].apply(
@@ -846,8 +854,8 @@ def categories(df):
         else:
             categories.append("Late")
 
-    # Add the categories list as a new column in the DataFrame
-    df["Category"] = categories
+    # Add the categories list as a new column in the DataFrame using .loc
+    df.loc[:, "Category"] = categories
 
     return df
 
